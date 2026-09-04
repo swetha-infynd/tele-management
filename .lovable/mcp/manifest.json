@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "project-harmony",
+      "version": "0.1.0",
+      "title": "Project Harmony"
+    },
+    "tools": [
+      {
+        "name": "dashboard_stats",
+        "title": "Dashboard stats",
+        "description": "Today's floor snapshot: agents logged in, attendance, calls, leads, sales, revenue and day-over-day deltas.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "team": {
+              "description": "Optional team name to filter by.",
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_employees",
+        "title": "List employees",
+        "description": "Search and page through the employee directory (agents, TLs, managers).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "search": {
+              "description": "Match on name, employee ID or email.",
+              "type": "string"
+            },
+            "team": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "admin",
+                "manager",
+                "team_leader",
+                "agent"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "Active",
+                "Inactive"
+              ]
+            },
+            "page": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "pageSize": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_leads",
+        "title": "List leads",
+        "description": "Search the sales pipeline for leads by text, status, campaign, source or agent.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "search": {
+              "description": "Match on customer, business, phone or email.",
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "New",
+                "Contacted",
+                "Interested",
+                "Follow-up",
+                "Quote Sent",
+                "Converted",
+                "Not Interested",
+                "No Answer",
+                "Wrong Number"
+              ]
+            },
+            "campaign": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "agentId": {
+              "type": "string"
+            },
+            "team": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "pageSize": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_lead",
+        "title": "Create lead",
+        "description": "Add a new lead to the demo sales pipeline.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "customerName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "phone": {
+              "type": "string",
+              "minLength": 1
+            },
+            "email": {
+              "type": "string"
+            },
+            "businessName": {
+              "type": "string"
+            },
+            "campaign": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "assignedAgentId": {
+              "type": "string",
+              "description": "Employee id of the agent who owns the lead."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "New",
+                "Contacted",
+                "Interested",
+                "Follow-up",
+                "Quote Sent",
+                "Converted",
+                "Not Interested",
+                "No Answer",
+                "Wrong Number"
+              ]
+            },
+            "followUpDate": {
+              "description": "yyyy-mm-dd",
+              "type": "string"
+            },
+            "saleAmount": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "customerName",
+            "phone",
+            "assignedAgentId"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "leaderboard",
+        "title": "Agent leaderboard",
+        "description": "Ranked agents for a period by sales, revenue, conversion, calls or quality score.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "period": {
+              "type": "string",
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly"
+              ]
+            },
+            "metric": {
+              "type": "string",
+              "enum": [
+                "sales",
+                "revenue",
+                "conversion",
+                "calls",
+                "qualityScore"
+              ]
+            },
+            "team": {
+              "type": "string"
+            },
+            "limit": {
+              "description": "How many rows to return (default 10).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "attendance_summary",
+        "title": "Attendance summary",
+        "description": "Attendance totals per day for a date range, optionally filtered by team.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "description": "Start date, yyyy-mm-dd"
+            },
+            "to": {
+              "type": "string",
+              "description": "End date, yyyy-mm-dd"
+            },
+            "team": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "from",
+            "to"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "generate_report",
+        "title": "Generate report",
+        "description": "Build an operations report (daily, weekly, monthly, team, attendance, sales, revenue, conversion or agent) for a date range.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "team",
+                "attendance",
+                "sales",
+                "revenue",
+                "conversion",
+                "agent"
+              ]
+            },
+            "from": {
+              "type": "string",
+              "description": "Start date, yyyy-mm-dd"
+            },
+            "to": {
+              "type": "string",
+              "description": "End date, yyyy-mm-dd"
+            },
+            "team": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "from",
+            "to"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "ai_daily_summary",
+        "title": "AI daily summary",
+        "description": "Simulated AI briefing of the floor: highlights, risks and recommended actions.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "team": {
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
