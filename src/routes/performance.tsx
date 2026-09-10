@@ -125,10 +125,10 @@ function PerformancePage() {
             </Select>
             <ExportMenu
               filename="performance"
-              columns={["Agent", "Team", "Calls", "Connected", "Leads", "Sales", "Revenue", "Conversion %", "QA"]}
+              columns={["Agent", "Campaigns", "Calls", "Connected", "Leads", "Sales", "Revenue", "Conversion %", "QA"]}
               rows={rows.map((r) => [
                 r.employeeName,
-                r.team,
+                r.campaigns || r.campaign || "—",
                 r.callsMade,
                 r.callsConnected,
                 r.leadsGenerated,
@@ -234,7 +234,7 @@ function PerformancePage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Agent</TableHead>
-                <TableHead className="hidden md:table-cell">Team</TableHead>
+                <TableHead className="hidden md:table-cell">Campaigns</TableHead>
                 <TableHead className="text-right">Calls</TableHead>
                 <TableHead className="hidden sm:table-cell text-right">Connected</TableHead>
                 <TableHead className="text-right">Leads</TableHead>
@@ -253,7 +253,7 @@ function PerformancePage() {
                 rows.map((r) => (
                   <TableRow key={r.employeeId}>
                     <TableCell className="font-medium">{r.employeeName}</TableCell>
-                    <TableCell className="hidden md:table-cell">{r.team}</TableCell>
+                    <TableCell className="hidden md:table-cell">{r.campaigns || r.campaign || "—"}</TableCell>
                     <TableCell className="text-right">{num(r.callsMade)}</TableCell>
                     <TableCell className="hidden sm:table-cell text-right">
                       {num(r.callsConnected)}

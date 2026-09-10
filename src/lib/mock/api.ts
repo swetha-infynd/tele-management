@@ -440,6 +440,7 @@ export async function followUpsDue(employeeId?: string): Promise<LeadRow[]> {
 export interface PerformanceRow extends PerformanceRecord {
   employeeName: string;
   team: string;
+  campaigns?: string;
   conversion: number;
 }
 
@@ -466,12 +467,12 @@ export async function listPerformance(params: {
       (!params.team || params.team === "all" || empById.get(p.employeeId)?.team === params.team) &&
       (!params.campaign || params.campaign === "all" || p.campaign === params.campaign),
   );
-  const agg = new Map<string, PerformanceRow>();
+  const agg = new Map<string, PerformanceRow & { _campaigns: Set<string> }>();
   for (const p of rows) {
     const e = empById.get(p.employeeId);
-    const cur =
-      agg.get(p.employeeId) ??
-      ({
+    let cur = agg.get(p.employeeId);
+    if (!cur) {
+      cur = {
         ...p,
         id: p.employeeId,
         callsMade: 0,
@@ -483,7 +484,9 @@ export async function listPerformance(params: {
         loginHours: 0,
         qualityScore: 0,
         conversion: 0,
-        campaign: params.campaign && params.campaign !== "all" ? params.campaign : "All campaigns",
+        campaign: "",
+        campaigns: "",
+        _campaigns: new Set<string>(),
         dialAttempts: 0,
         noAnswer: 0,
         busy: 0,
@@ -493,7 +496,12 @@ export async function listPerformance(params: {
         hourly: [],
         employeeName: e?.name ?? "—",
         team: e?.team ?? "—",
-      } as PerformanceRow);
+      };
+      agg.set(p.employeeId, cur);
+    }
+    if (p.campaign) {
+      cur._campaigns.add(p.campaign);
+    }
     cur.callsMade += p.callsMade;
     cur.callsConnected += p.callsConnected;
     cur.leadsGenerated += p.leadsGenerated;
@@ -508,14 +516,18 @@ export async function listPerformance(params: {
     cur.voicemail += p.voicemail;
     cur.dnc += p.dnc;
     cur.talkTimeSec += p.talkTimeSec;
-    agg.set(p.employeeId, cur);
   }
   const counts = new Map<string, number>();
   for (const p of rows) counts.set(p.employeeId, (counts.get(p.employeeId) ?? 0) + 1);
   const out = [...agg.values()].map((r) => {
     const n = counts.get(r.employeeId) || 1;
+    const campList = Array.from(r._campaigns);
+    const campaignStr = campList.length > 0 ? campList.join(", ") : r.campaign || "—";
+    const { _campaigns, ...rest } = r;
     return {
-      ...r,
+      ...rest,
+      campaign: campaignStr,
+      campaigns: campaignStr,
       avgTalkTimeSec: Math.round(r.avgTalkTimeSec / n),
       qualityScore: Number((r.qualityScore / n).toFixed(1)),
       loginHours: Number(r.loginHours.toFixed(1)),
