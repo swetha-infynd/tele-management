@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AiInsightsRouteImport } from './routes/ai-insights'
 import { Route as AttendanceRouteImport } from './routes/attendance'
+import { Route as DialDataRouteImport } from './routes/dial-data'
 import { Route as IncentivesRouteImport } from './routes/incentives'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LeaveRouteImport } from './routes/leave'
@@ -45,6 +46,11 @@ const AiInsightsRoute = AiInsightsRouteImport.update({
 const AttendanceRoute = AttendanceRouteImport.update({
   id: '/attendance',
   path: '/attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DialDataRoute = DialDataRouteImport.update({
+  id: '/dial-data',
+  path: '/dial-data',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IncentivesRoute = IncentivesRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai-insights': typeof AiInsightsRoute
   '/attendance': typeof AttendanceRoute
+  '/dial-data': typeof DialDataRoute
   '/incentives': typeof IncentivesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/leave': typeof LeaveRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai-insights': typeof AiInsightsRoute
   '/attendance': typeof AttendanceRoute
+  '/dial-data': typeof DialDataRoute
   '/incentives': typeof IncentivesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/leave': typeof LeaveRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/ai-insights': typeof AiInsightsRoute
   '/attendance': typeof AttendanceRoute
+  '/dial-data': typeof DialDataRoute
   '/incentives': typeof IncentivesRoute
   '/leaderboard': typeof LeaderboardRoute
   '/leave': typeof LeaveRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ai-insights'
     | '/attendance'
+    | '/dial-data'
     | '/incentives'
     | '/leaderboard'
     | '/leave'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ai-insights'
     | '/attendance'
+    | '/dial-data'
     | '/incentives'
     | '/leaderboard'
     | '/leave'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ai-insights'
     | '/attendance'
+    | '/dial-data'
     | '/incentives'
     | '/leaderboard'
     | '/leave'
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AiInsightsRoute: typeof AiInsightsRoute
   AttendanceRoute: typeof AttendanceRoute
+  DialDataRoute: typeof DialDataRoute
   IncentivesRoute: typeof IncentivesRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LeaveRoute: typeof LeaveRoute
@@ -340,6 +353,13 @@ declare module '@tanstack/react-router' {
       path: '/attendance'
       fullPath: '/attendance'
       preLoaderRoute: typeof AttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dial-data': {
+      id: '/dial-data'
+      path: '/dial-data'
+      fullPath: '/dial-data'
+      preLoaderRoute: typeof DialDataRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/incentives': {
@@ -482,6 +502,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiInsightsRoute: AiInsightsRoute,
   AttendanceRoute: AttendanceRoute,
+  DialDataRoute: DialDataRoute,
   IncentivesRoute: IncentivesRoute,
   LeaderboardRoute: LeaderboardRoute,
   LeaveRoute: LeaveRoute,

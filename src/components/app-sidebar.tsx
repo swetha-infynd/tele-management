@@ -13,6 +13,7 @@ import {
   PhoneCall,
   Settings,
   Users,
+  Activity,
 } from "lucide-react";
 
 import {
@@ -47,6 +48,7 @@ const OPERATIONS: NavItem[] = [
 
 const INSIGHTS: NavItem[] = [
   { title: "Performance", url: "/performance", icon: BarChart3 },
+  { title: "Dial Data", url: "/dial-data", icon: Activity },
   { title: "Leaderboard", url: "/leaderboard", icon: Award },
   { title: "Quality (QA)", url: "/quality", icon: ClipboardCheck, permission: "review_qa" },
   { title: "Incentives", url: "/incentives", icon: BadgeIndianRupee },
