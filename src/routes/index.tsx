@@ -144,7 +144,7 @@ function DashboardPage() {
                 </SelectContent>
               </Select>
             )}
-            <Button asChild size="sm">
+            <Button asChild size="sm" variant="secondary">
               <Link to="/reports">View reports</Link>
             </Button>
           </>
@@ -158,6 +158,7 @@ function DashboardPage() {
           label="Total agents"
           value={stats?.totalAgents ?? 0}
           icon={Users}
+          iconClassName="bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300"
           hint={`${stats?.loggedIn ?? 0} currently logged in`}
           loading={isLoading}
         />
@@ -165,6 +166,7 @@ function DashboardPage() {
           label="Present today"
           value={`${stats?.present ?? 0} / ${stats?.totalAgents ?? 0}`}
           icon={UserCheck}
+          iconClassName="bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300"
           hint={`${stats?.attendanceRate ?? 0}% attendance • ${stats?.absent ?? 0} absent`}
           loading={isLoading}
         />
@@ -173,6 +175,7 @@ function DashboardPage() {
           value={num(stats?.callsToday ?? 0)}
           delta={stats?.deltas.calls}
           icon={PhoneCall}
+          iconClassName="bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300"
           loading={isLoading}
         />
         <StatCard
@@ -180,6 +183,7 @@ function DashboardPage() {
           value={num(stats?.leadsGenerated ?? 0)}
           delta={stats?.deltas.leads}
           icon={Target}
+          iconClassName="bg-purple-500/15 text-gray-700 dark:bg-purple-500/25 dark:text-gray-300"
           loading={isLoading}
         />
         <StatCard
@@ -187,6 +191,7 @@ function DashboardPage() {
           value={num(stats?.salesClosed ?? 0)}
           delta={stats?.deltas.sales}
           icon={CalendarCheck}
+          iconClassName="bg-amber-500/15 text-gray-700 dark:bg-amber-500/25 dark:text-gray-300"
           loading={isLoading}
         />
         <StatCard
@@ -194,26 +199,28 @@ function DashboardPage() {
           value={compactInr(stats?.revenue ?? 0)}
           delta={stats?.deltas.revenue}
           icon={IndianRupee}
+          iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
           loading={isLoading}
         />
         <StatCard
           label="Conversion rate"
           value={`${stats?.conversionRate ?? 0}%`}
           icon={Percent}
+          iconClassName="bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300"
           hint="sales / leads today"
           loading={isLoading}
         />
-        <Card>
+        <Card className="relative overflow-hidden border-primary/30 transition-all hover:shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Monthly revenue target
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="text-2xl font-semibold tracking-tight">{monthlyProgress}%</div>
-            <Progress value={monthlyProgress} />
+            <div className="text-2xl font-bold tracking-tight text-foreground">{monthlyProgress}%</div>
+            <Progress value={monthlyProgress} className="h-2.5 bg-purple-100/80 dark:bg-purple-950/40 [&>div]:bg-purple-300 dark:[&>div]:bg-purple-400/80" />
             <p className="text-xs text-muted-foreground">
-              Target {settings ? compactInr(settings.monthlyRevenueTarget) : "—"}
+              Target <span className="font-semibold text-foreground">{settings ? compactInr(settings.monthlyRevenueTarget) : "—"}</span>
             </p>
           </CardContent>
         </Card>
@@ -240,7 +247,17 @@ function DashboardPage() {
             ) : (
               <ChartContainer config={chartConfig} className="h-[260px] w-full">
                 <AreaChart data={trend}>
-                  <CartesianGrid vertical={false} />
+                  <defs>
+                    <linearGradient id="cyanGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="purpleGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--chart-2)" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="var(--chart-2)" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
                   <XAxis
                     dataKey="date"
                     tickLine={false}
@@ -253,16 +270,18 @@ function DashboardPage() {
                   <Area
                     dataKey="calls"
                     type="monotone"
-                    fill="var(--color-calls)"
-                    fillOpacity={0.15}
-                    stroke="var(--color-calls)"
+                    fill="url(#cyanGrad)"
+                    fillOpacity={1}
+                    stroke="var(--chart-1)"
+                    strokeWidth={2}
                   />
                   <Area
                     dataKey="leads"
                     type="monotone"
-                    fill="var(--color-leads)"
-                    fillOpacity={0.15}
-                    stroke="var(--color-leads)"
+                    fill="url(#purpleGrad)"
+                    fillOpacity={1}
+                    stroke="var(--chart-2)"
+                    strokeWidth={2}
                   />
                 </AreaChart>
               </ChartContainer>
@@ -270,12 +289,15 @@ function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="group relative overflow-hidden border-banner/30 bg-gradient-to-br from-banner/10 via-card to-primary/5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="size-4" /> AI daily summary
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <div className="flex size-7 items-center justify-center rounded-md bg-banner/20 text-gray-700 dark:text-gray-300 shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
+                <Sparkles className="size-4 text-banner animate-pulse" />
+              </div>
+              AI Daily Summary
             </CardTitle>
-            <CardDescription>{ai?.headline ?? "Generating insights…"}</CardDescription>
+            <CardDescription className="font-medium text-foreground/90">{ai?.headline ?? "Generating insights…"}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {!ai ? (
@@ -287,17 +309,19 @@ function DashboardPage() {
             ) : (
               <>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary">Rating {ai.rating}/10</Badge>
+                  <Badge className="bg-banner/20 text-banner-foreground border-banner/30 hover:bg-banner/30">
+                    Rating {ai.rating}/10
+                  </Badge>
                 </div>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   {ai.bullets.slice(0, 4).map((b) => (
                     <li key={b} className="flex gap-2">
                       <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                      {b}
+                      <span>{b}</span>
                     </li>
                   ))}
                 </ul>
-                <Button asChild variant="outline" size="sm" className="w-full">
+                <Button asChild size="sm" variant="secondary" className="w-full shadow">
                   <Link to="/ai-insights">Open AI insights</Link>
                 </Button>
               </>

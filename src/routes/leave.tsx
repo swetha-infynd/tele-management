@@ -125,7 +125,7 @@ function LeavePage() {
         title="Leave management"
         description="Apply for time off, track balances and clear pending approvals."
         actions={
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
             <CalendarPlus className="mr-2 size-4" /> Apply for leave
           </Button>
         }

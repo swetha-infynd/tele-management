@@ -174,7 +174,7 @@ function QualityPage() {
             {can("review_qa") && (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">New evaluation</Button>
+                  <Button size="sm" variant="secondary">New evaluation</Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
                   <DialogHeader>

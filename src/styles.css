@@ -46,6 +46,8 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
+  --color-banner: var(--banner);
+  --color-banner-foreground: var(--banner-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -63,73 +65,95 @@
 
 :root {
   --radius: 0.625rem;
+  /* Preserved background color as requested */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --card: oklch(0.995 0.003 260);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+
+  /* Primary: Electric Cyan / Teal (#00F0B5) from theme image CTA & highlights */
+  --primary: oklch(0.85 0.17 175);
+  --primary-foreground: oklch(0.16 0.05 175);
+
+  /* Accent & Banner: Vibrant Violet / Purple (#854BF6) from top notification banner */
+  --banner: oklch(0.60 0.24 282);
+  --banner-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.96 0.025 282);
+  --accent-foreground: oklch(0.35 0.22 282);
+
+  /* Secondary & Muted surface tints */
+  --secondary: oklch(0.96 0.02 260);
+  --secondary-foreground: oklch(0.25 0.05 260);
+  --muted: oklch(0.962 0.012 255);
+  --muted-foreground: oklch(0.46 0.03 255);
+
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
+  --border: oklch(0.92 0.01 255);
+  --input: oklch(0.92 0.01 255);
+  --ring: oklch(0.85 0.17 175);
+
+  /* Chart palette aligned with Violet theme */
+  --chart-1: oklch(0.85 0.17 282);
+  --chart-2: oklch(0.60 0.24 282);
+  --chart-3: oklch(0.68 0.16 195);
+  --chart-4: oklch(0.70 0.20 310);
+  --chart-5: oklch(0.78 0.16 150);
+
+  --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary: oklch(0.60 0.24 282);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.94 0.025 282);
+  --sidebar-accent-foreground: oklch(0.35 0.22 282);
+  --sidebar-border: oklch(0.92 0.01 255);
+  --sidebar-ring: oklch(0.85 0.17 175);
 }
 
 .dark {
+  /* Preserved dark background color as requested */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.18 0.01 260);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+
+  --primary: oklch(0.85 0.17 175);
+  --primary-foreground: oklch(0.12 0.04 175);
+
+  --banner: oklch(0.58 0.24 282);
+  --banner-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.24 0.06 282);
   --accent-foreground: oklch(0.985 0 0);
+
+  --secondary: oklch(0.24 0.05 175);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.22 0.02 282);
+  --muted-foreground: oklch(0.70 0.02 282);
+
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
+  --ring: oklch(0.85 0.17 175);
+
+  --chart-1: oklch(0.85 0.17 282);
+  --chart-2: oklch(0.68 0.24 282);
+  --chart-3: oklch(0.72 0.16 195);
+  --chart-4: oklch(0.75 0.20 310);
+  --chart-5: oklch(0.80 0.16 150);
+
+  --sidebar: oklch(0.145 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.60 0.24 282);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.24 0.05 282);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.85 0.17 175);
 }
 
 @layer base {
@@ -141,6 +165,50 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+}
+
+/* Custom micro-animations */
+@keyframes card-entry {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.03); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-card-load {
+  animation: card-entry 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-float {
+  animation: float-subtle 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
 }
 
 /* Application preferences: density, font scale and motion */

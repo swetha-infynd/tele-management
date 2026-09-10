@@ -179,8 +179,8 @@ function AttendancePage() {
                     <TableCell>{longDate(r.date)}</TableCell>
                     <TableCell className="font-medium">{r.employeeName}</TableCell>
                     <TableCell className="hidden md:table-cell">{r.team}</TableCell>
-                    <TableCell>{r.checkIn ?? "—"}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{r.checkOut ?? "—"}</TableCell>
+                    <TableCell className="font-medium text-emerald-600 dark:text-emerald-400">{r.checkIn ?? "—"}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-medium text-rose-600 dark:text-rose-400">{r.checkOut ?? "—"}</TableCell>
                     <TableCell className="hidden lg:table-cell">{r.workingHours}h</TableCell>
                     <TableCell className="hidden xl:table-cell">{r.lateMinutes || "—"}</TableCell>
                     <TableCell>

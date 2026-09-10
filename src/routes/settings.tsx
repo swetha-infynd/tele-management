@@ -103,7 +103,7 @@ function SettingsPage() {
         description="Organisation configuration, targets and personal preferences."
         actions={
           editable && (
-            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            <Button variant="secondary" onClick={() => save.mutate()} disabled={save.isPending}>
               {save.isPending ? "Saving…" : "Save changes"}
             </Button>
           )

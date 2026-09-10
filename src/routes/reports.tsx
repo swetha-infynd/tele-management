@@ -192,7 +192,7 @@ function ReportsPage() {
             </Select>
           </div>
           <div className="md:col-span-5">
-            <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
+            <Button variant="secondary" onClick={() => generate.mutate()} disabled={generate.isPending}>
               {generate.isPending ? "Generating…" : "Generate report"}
             </Button>
           </div>

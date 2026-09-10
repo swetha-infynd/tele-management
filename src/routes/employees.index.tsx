@@ -117,6 +117,7 @@ function EmployeesPage() {
             {can("manage_employees") && (
               <Button
                 size="sm"
+                variant="secondary"
                 onClick={() => {
                   setEditId(null);
                   setFormOpen(true);

@@ -92,7 +92,7 @@ export function CampaignFormDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button size="sm" variant="secondary">
           <Plus className="mr-2 h-4 w-4" />
           New campaign
         </Button>

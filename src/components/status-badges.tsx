@@ -32,7 +32,32 @@ const ATT_VARIANTS: Record<AttendanceStatus, Variant> = {
 };
 
 export function AttendanceStatusBadge({ status }: { status: AttendanceStatus }) {
-  return <Badge variant={ATT_VARIANTS[status]}>{status}</Badge>;
+  if (status === "Present") {
+    return (
+      <Badge className="bg-emerald-600 text-white border-transparent hover:bg-emerald-700 font-semibold shadow-xs whitespace-nowrap">
+        Present
+      </Badge>
+    );
+  }
+  if (status === "Late") {
+    return (
+      <Badge className="bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40 hover:bg-amber-500/30 font-medium whitespace-nowrap">
+        Late
+      </Badge>
+    );
+  }
+  if (status === "Absent") {
+    return (
+      <Badge className="bg-rose-600 text-white border-transparent hover:bg-rose-700 font-medium shadow-xs whitespace-nowrap">
+        Absent
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant={ATT_VARIANTS[status]} className="whitespace-nowrap">
+      {status}
+    </Badge>
+  );
 }
 
 const LEAVE_VARIANTS: Record<LeaveStatus, Variant> = {

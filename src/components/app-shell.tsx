@@ -141,7 +141,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DropdownMenu>
           </div>
         </header>
-        <div className="flex-1 space-y-6 p-4 md:p-6">{children}</div>
+        <main className="flex-1 min-h-[calc(100vh-3.5rem)] space-y-6 p-4 md:p-6 bg-slate-50/70 dark:bg-slate-950/50">
+          {children}
+        </main>
         <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
       </SidebarInset>
     </SidebarProvider>

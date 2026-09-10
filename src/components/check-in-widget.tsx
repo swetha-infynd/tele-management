@@ -50,11 +50,16 @@ export function CheckInWidget() {
   });
 
   return (
-    <Card>
+    <Card className="group relative overflow-hidden bg-gradient-to-r from-primary/5 via-card to-card border border-slate-200/80 dark:border-slate-800/80 transition-all duration-300 hover:shadow-md">
       <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
-        <Timer className="size-5 text-muted-foreground" />
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-gray-700 dark:text-gray-300 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+          <Timer className="size-5" />
+        </div>
         <div className="flex-1">
-          <p className="text-sm font-medium">Shift attendance</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-foreground">Shift attendance</p>
+            
+          </div>
           <p className="text-xs text-muted-foreground">
             {record?.checkIn
               ? `Checked in at ${record.checkIn}${record.checkOut ? ` • Checked out at ${record.checkOut}` : " • Currently on shift"}`
@@ -65,7 +70,8 @@ export function CheckInWidget() {
         <div className="flex gap-2">
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
+            className="text-gray-500 hover:text-gray-600 hover:bg-transparent"
             disabled={!!record?.checkIn || checkIn.isPending}
             onClick={() => checkIn.mutate()}
           >
@@ -74,6 +80,7 @@ export function CheckInWidget() {
           </Button>
           <Button
             size="sm"
+            className="bg-red-500 text-white hover:bg-red-600"
             disabled={!record?.checkIn || !!record?.checkOut || checkOut.isPending}
             onClick={() => checkOut.mutate()}
           >

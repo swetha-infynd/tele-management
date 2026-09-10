@@ -93,7 +93,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/20 text-gray-700 dark:text-gray-300">
             <PhoneCall className="size-4" />
           </div>
           <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
