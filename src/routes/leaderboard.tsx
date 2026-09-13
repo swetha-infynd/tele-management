@@ -172,7 +172,7 @@ function LeaderboardPage() {
         </Alert>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
         {podium.map((r, i) => {
           const Icon = icons[i] ?? Medal;
           return (
@@ -230,7 +230,7 @@ function LeaderboardPage() {
             pro-rated target: green on target, amber within 20%, red below.
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>

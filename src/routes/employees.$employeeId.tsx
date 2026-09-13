@@ -126,7 +126,7 @@ function EmployeeDetailPage() {
         </Card>
 
         <div className="space-y-4 lg:col-span-3">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Sales (30d)" value={num(p?.sales ?? 0)} />
             <StatCard label="Revenue (30d)" value={compactInr(p?.revenue ?? 0)} />
             <StatCard label="Conversion" value={pct(p?.conversion ?? 0)} />
@@ -199,7 +199,7 @@ function EmployeeDetailPage() {
                 {attendanceRows.filter((r) => r.status === "Absent").length}
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent className="overflow-x-auto px-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -236,12 +236,12 @@ function EmployeeDetailPage() {
             <CardHeader>
               <CardTitle className="text-base">Recent leads</CardTitle>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent className="overflow-x-auto px-0">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Customer</TableHead>
-                    <TableHead>Campaign</TableHead>
+                    <TableHead className="hidden sm:table-cell">Campaign</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Sale</TableHead>
                   </TableRow>
@@ -258,7 +258,7 @@ function EmployeeDetailPage() {
                           {l.customerName}
                         </Link>
                       </TableCell>
-                      <TableCell>{l.campaign}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{l.campaign}</TableCell>
                       <TableCell>
                         <LeadStatusBadge status={l.status} />
                       </TableCell>
@@ -309,13 +309,13 @@ function EmployeeDetailPage() {
             <CardHeader>
               <CardTitle className="text-base">Leave history</CardTitle>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent className="overflow-x-auto px-0">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Type</TableHead>
-                    <TableHead>From</TableHead>
-                    <TableHead>To</TableHead>
+                    <TableHead className="hidden sm:table-cell">From</TableHead>
+                    <TableHead className="hidden sm:table-cell">To</TableHead>
                     <TableHead>Days</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
@@ -324,8 +324,8 @@ function EmployeeDetailPage() {
                   {leave.map((l) => (
                     <TableRow key={l.id}>
                       <TableCell>{l.type}</TableCell>
-                      <TableCell>{longDate(l.from)}</TableCell>
-                      <TableCell>{longDate(l.to)}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{longDate(l.from)}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{longDate(l.to)}</TableCell>
                       <TableCell>{l.days}</TableCell>
                       <TableCell>
                         <LeaveStatusBadge status={l.status} />

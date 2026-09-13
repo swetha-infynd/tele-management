@@ -142,7 +142,7 @@ function CampaignDetailPage() {
         {summary && <RagBadge status={summary.status} />}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Calls (7 days)"
           value={num(summary?.calls ?? 0)}
@@ -183,7 +183,7 @@ function CampaignDetailPage() {
                 Campaign → agent drill-down for {from} to {to}.
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent className="overflow-x-auto px-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -260,7 +260,7 @@ function CampaignDetailPage() {
               <CardTitle className="text-base">Sales versus weekly target</CardTitle>
               <CardDescription>Last six weeks for {campaignId}.</CardDescription>
             </CardHeader>
-            <CardContent className="h-[320px]">
+            <CardContent className="h-[250px] sm:h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={weeks} margin={{ left: -20, right: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -279,7 +279,7 @@ function CampaignDetailPage() {
               <CardTitle className="text-base">Weekly detail</CardTitle>
               <CardDescription>Calls, conversion and attainment per week.</CardDescription>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent className="overflow-x-auto px-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -321,7 +321,7 @@ function CampaignDetailPage() {
         </TabsContent>
 
         <TabsContent value="dialler" className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Dial attempts" value={num(dialler?.dialAttempts ?? 0)} hint="Last 14 days" />
             <StatCard label="Connect rate" value={pct(dialler?.connectRate ?? 0)} hint={`Best hour ${dialler?.bestHour ?? "—"}`} />
             <StatCard label="No answer" value={pct(dialler?.noAnswerRate ?? 0)} hint={`Weakest hour ${dialler?.worstHour ?? "—"}`} />
@@ -332,7 +332,7 @@ function CampaignDetailPage() {
               <CardTitle className="text-base">Call outcomes by hour</CardTitle>
               <CardDescription>Imported dialler feed, aggregated across agents.</CardDescription>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[250px] sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dialler?.hourly ?? []} margin={{ left: -20, right: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />

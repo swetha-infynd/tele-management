@@ -97,7 +97,7 @@ function AttendancePage() {
 
       <CheckInWidget />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Attendance rate" value={pct(attendanceRate)} />
         <StatCard label="Present days" value={String(totals.present)} />
         <StatCard label="Late logins" value={String(totals.late)} />
@@ -154,7 +154,7 @@ function AttendancePage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>

@@ -153,7 +153,7 @@ function DashboardPage() {
 
       <CheckInWidget />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Total agents"
           value={stats?.totalAgents ?? 0}
@@ -228,7 +228,7 @@ function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
             <div>
               <CardTitle>Call & sales trend</CardTitle>
               <CardDescription>Daily volume across the selected period</CardDescription>
@@ -243,9 +243,9 @@ function DashboardPage() {
           </CardHeader>
           <CardContent>
             {trend.length === 0 ? (
-              <Skeleton className="h-[260px] w-full" />
+              <Skeleton className="h-[200px] w-full sm:h-[260px]" />
             ) : (
-              <ChartContainer config={chartConfig} className="h-[260px] w-full">
+              <ChartContainer config={chartConfig} className="h-[200px] w-full sm:h-[260px]">
                 <AreaChart data={trend}>
                   <defs>
                     <linearGradient id="cyanGrad" x1="0" y1="0" x2="0" y2="1">
@@ -337,7 +337,7 @@ function DashboardPage() {
             <CardDescription>Today across {team === "all" ? "all teams" : team}</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[200px] w-full">
+            <ChartContainer config={chartConfig} className="h-[180px] w-full sm:h-[200px]">
               <BarChart data={attendanceMix}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="name" tickLine={false} axisLine={false} />
@@ -418,7 +418,7 @@ function DashboardPage() {
           <CardTitle>Live floor status</CardTitle>
           <CardDescription>Check-in and check-out for today</CardDescription>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>

@@ -111,14 +111,14 @@ function SettingsPage() {
       />
 
       <Tabs defaultValue="application">
-        <TabsList className="flex-wrap">
+        <TabsList>
           <TabsTrigger value="application">Application</TabsTrigger>
           <TabsTrigger value="organisation">Organisation</TabsTrigger>
-          <TabsTrigger value="targets">Targets & shifts</TabsTrigger>
-          <TabsTrigger value="incentives">Incentive slabs</TabsTrigger>
+          <TabsTrigger value="targets">Targets</TabsTrigger>
+          <TabsTrigger value="incentives">Incentives</TabsTrigger>
           <TabsTrigger value="holidays">Holidays</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="profile">My profile</TabsTrigger>
+          <TabsTrigger value="notifications">Alerts</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
         </TabsList>
 
         <TabsContent value="application" className="mt-4">
@@ -238,7 +238,7 @@ function SettingsPage() {
                 Bonus paid when an agent crosses the sales threshold in a period.
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent className="overflow-x-auto px-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -265,7 +265,7 @@ function SettingsPage() {
               <CardTitle className="text-base">Holiday calendar</CardTitle>
               <CardDescription>Non-working days excluded from attendance rules.</CardDescription>
             </CardHeader>
-            <CardContent className="px-0">
+            <CardContent className="overflow-x-auto px-0">
               <Table>
                 <TableHeader>
                   <TableRow>

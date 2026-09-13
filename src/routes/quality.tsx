@@ -269,7 +269,7 @@ function QualityPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Evaluations" value={String(stats.count)} hint="In current scope" />
         <StatCard label="Average score" value={`${stats.avg}%`} hint="All parameters" />
         <StatCard label="Highest score" value={`${stats.best}%`} hint="Best evaluated call" />
@@ -303,7 +303,7 @@ function QualityPage() {
           <CardTitle className="text-base">Scorecards</CardTitle>
           <CardDescription>Most recent evaluations first.</CardDescription>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>

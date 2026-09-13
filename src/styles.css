@@ -239,3 +239,9 @@ html[data-reduce-motion="true"] *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
 }
+
+/* Chart containers: strip aspect-video when an explicit height is set so
+   the chart sizes to the parent width instead of overflowing. */
+[data-chart][class*="h-"] {
+  aspect-ratio: auto;
+}

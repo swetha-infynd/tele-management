@@ -132,7 +132,7 @@ function ReportsPage() {
             Choose a report type, date range, team and campaign scope.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-5">
+        <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-5">
           <div className="grid gap-2">
             <Label>Report type</Label>
             <Select value={type} onValueChange={(v) => setType(v as ReportType)}>
@@ -208,7 +208,7 @@ function ReportsPage() {
               : "Run the builder above to see results here."}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 px-0">
+        <CardContent className="space-y-4 overflow-x-auto px-0">
           {result && result.summary.length > 0 && (
             <>
               <div className="grid gap-4 px-6 sm:grid-cols-2 lg:grid-cols-4">

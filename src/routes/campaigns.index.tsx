@@ -147,7 +147,7 @@ function CampaignsOverviewPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Calls" value={num(totals.calls)} hint={`Across ${rows.length} campaigns`} />
         <StatCard
           label="Sales"
@@ -183,7 +183,7 @@ function CampaignsOverviewPage() {
             Ranked by sales attainment against the pro-rated weekly target for this range.
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -274,7 +274,7 @@ function CampaignsOverviewPage() {
             <CardTitle className="text-base">Sales versus target by campaign</CardTitle>
             <CardDescription>Pro-rated target for the selected range.</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={rows} margin={{ left: -20, right: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -296,7 +296,7 @@ function CampaignsOverviewPage() {
               Connect and no-answer rate by hour of day, last {days} days.
             </CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dialler?.hourly ?? []} margin={{ left: -20, right: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />

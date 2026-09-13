@@ -181,7 +181,7 @@ function LeadsPage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 xl:grid-cols-5">
         {pipeline.slice(0, 5).map((p) => (
           <Card key={p.status}>
             <CardHeader className="pb-1">
@@ -265,7 +265,7 @@ function LeadsPage() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>

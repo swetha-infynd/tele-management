@@ -179,7 +179,7 @@ function EmployeesPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>

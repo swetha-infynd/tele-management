@@ -131,7 +131,7 @@ function LeavePage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="My leave balance" value={`${me?.leaveBalance ?? 0} days`} />
         <StatCard label="Pending requests" value={String(pending)} />
         <StatCard label="Approved" value={String(approved)} />
@@ -161,7 +161,7 @@ function LeavePage() {
               </Select>
             </div>
           </CardHeader>
-          <CardContent className="px-0">
+          <CardContent className="overflow-x-auto px-0">
             <Table>
               <TableHeader>
                 <TableRow>

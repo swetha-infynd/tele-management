@@ -115,7 +115,7 @@ function LeadDetailPage() {
             }
           />
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
             <Card className="lg:col-span-1">
               <CardHeader>
                 <CardTitle className="text-base">Contact</CardTitle>

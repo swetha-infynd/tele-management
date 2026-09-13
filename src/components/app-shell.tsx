@@ -23,11 +23,13 @@ import { GlobalSearch } from "@/components/global-search";
 import { api } from "@/lib/mock/api";
 import { initials, roleLabel, timeAgo } from "@/lib/format";
 import { useSession } from "@/lib/session";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { session, signOut } = useSession();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const { prefs } = usePreferences();
 
@@ -41,17 +43,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider
       key={prefs.sidebarCollapsed ? "collapsed" : "expanded"}
-      defaultOpen={!prefs.sidebarCollapsed}
+      defaultOpen={isMobile ? false : !prefs.sidebarCollapsed}
     >
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3 sm:px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-1 h-4" />
           <Button
             variant="outline"
             size="sm"
-            className="text-muted-foreground w-56 justify-start gap-2 font-normal"
+            className="hidden w-56 justify-start gap-2 font-normal text-muted-foreground sm:flex"
             onClick={() => setSearchOpen(true)}
           >
             <Search className="size-4" />
@@ -59,6 +61,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             <kbd className="bg-muted pointer-events-none ml-auto hidden select-none rounded border px-1.5 font-mono text-[10px] sm:inline-block">
               ⌘K
             </kbd>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sm:hidden"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search"
+          >
+            <Search className="size-4" />
           </Button>
           <div className="ml-auto flex items-center gap-1">
             <DropdownMenu>

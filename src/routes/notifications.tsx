@@ -102,13 +102,13 @@ function NotificationsPage() {
       />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <TabsList className="flex-wrap">
+        <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="unread">Unread</TabsTrigger>
           <TabsTrigger value="followup">Follow-ups</TabsTrigger>
           <TabsTrigger value="target">Targets</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="performance">Perf.</TabsTrigger>
           <TabsTrigger value="birthday">Birthdays</TabsTrigger>
           <TabsTrigger value="alert">Alerts</TabsTrigger>
         </TabsList>

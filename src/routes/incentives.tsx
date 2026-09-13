@@ -102,7 +102,7 @@ function IncentivesPage() {
         </TabsList>
       </Tabs>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total payout" value={compactInr(totalPayout)} hint="Bonus + commission" />
         <StatCard label="Qualified agents" value={`${qualified}/${rows.length}`} hint="Reached a slab" />
         <StatCard
@@ -139,7 +139,7 @@ function IncentivesPage() {
           <CardTitle className="text-base">Payout sheet</CardTitle>
           <CardDescription>Ranked by total payout for the selected period.</CardDescription>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>

@@ -142,7 +142,7 @@ function PerformancePage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Calls made" value={num(totals.calls)} />
         <StatCard label="Leads generated" value={num(totals.leads)} />
         <StatCard label="Sales closed" value={num(totals.sales)} />
@@ -157,7 +157,7 @@ function PerformancePage() {
             <CardDescription>Daily dialler activity and qualified leads.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-64 w-full">
+            <ChartContainer config={chartConfig} className="h-52 w-full sm:h-64">
               <AreaChart data={chartData}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
@@ -188,7 +188,7 @@ function PerformancePage() {
             <CardDescription>Closed-won value per day.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-64 w-full">
+            <ChartContainer config={chartConfig} className="h-52 w-full sm:h-64">
               <BarChart data={chartData}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
@@ -206,7 +206,7 @@ function PerformancePage() {
             <CardDescription>Sales as a share of leads generated.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-56 w-full">
+            <ChartContainer config={chartConfig} className="h-48 w-full sm:h-56">
               <LineChart data={chartData}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
@@ -229,7 +229,7 @@ function PerformancePage() {
         <CardHeader>
           <CardTitle className="text-base">Agent breakdown</CardTitle>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>

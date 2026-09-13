@@ -96,7 +96,7 @@ function DialDataPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <StatCard label="Total Dial Attempts" value={num(totals.dials)} />
         <StatCard label="Total Connects" value={num(totals.connects)} />
         <StatCard label="Avg Connect Rate" value={pct(overallConnectRate)} />
@@ -126,7 +126,7 @@ function DialDataPage() {
         <CardHeader>
           <CardTitle className="text-base">Campaign Breakdown</CardTitle>
         </CardHeader>
-        <CardContent className="px-0">
+        <CardContent className="overflow-x-auto px-0">
           <Table>
             <TableHeader>
               <TableRow>
