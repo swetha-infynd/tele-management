@@ -48,7 +48,7 @@ export function addDays(d: Date, n: number) {
   return c;
 }
 
-export const TEAMS = ["Team A", "Team B", "Team C", "Team D"] as const;
+export const TEAMS = ["Client A", "Client B", "Client C", "Client D"] as const;
 export const CAMPAIGNS = [
   "Solar UK",
   "Medicare US",
@@ -81,10 +81,10 @@ export function seedEmployees(): Employee[] {
   const staff: Array<{ name: string; role: Role; team: string }> = [
     { name: "Charlotte Hughes", role: "admin", team: "Management" },
     { name: "James Whitfield", role: "manager", team: "Management" },
-    { name: "Daniel Carter", role: "team_leader", team: "Team A" },
-    { name: "Sophie Bennett", role: "team_leader", team: "Team B" },
-    { name: "Liam Fletcher", role: "team_leader", team: "Team C" },
-    { name: "Hannah Price", role: "team_leader", team: "Team D" },
+    { name: "Daniel Carter", role: "team_leader", team: "Client A" },
+    { name: "Sophie Bennett", role: "team_leader", team: "Client B" },
+    { name: "Liam Fletcher", role: "team_leader", team: "Client C" },
+    { name: "Hannah Price", role: "team_leader", team: "Client D" },
   ];
 
   staff.forEach((s, i) => {
@@ -424,9 +424,9 @@ export function seedNotifications(): AppNotification[] {
     severity,
   });
   return [
-    mk(1, "alert", "Sales dropped 20% vs yesterday", "Team B accounted for most of the decline.", "critical", 25),
+    mk(1, "alert", "Sales dropped 20% vs yesterday", "Client B accounted for most of the decline.", "critical", 25),
     mk(2, "attendance", "Attendance below 85%", "4 agents have not checked in for the morning shift.", "warning", 60),
-    mk(3, "followup", "12 follow-ups due today", "Assigned across Team A and Team C.", "info", 95),
+    mk(3, "followup", "12 follow-ups due today", "Assigned across Client A and Client C.", "info", 95),
     mk(4, "performance", "Oliver achieved highest conversion", "31.5% conversion rate today.", "success", 150),
     mk(5, "target", "Monthly target at 78%", "Projected to close at 112% at the current pace.", "info", 320),
     mk(6, "birthday", "Birthday reminder", "Amelia Roberts' birthday is tomorrow.", "info", 700),

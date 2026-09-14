@@ -135,7 +135,7 @@ function DashboardPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All teams</SelectItem>
+                  <SelectItem value="all">All Clients</SelectItem>
                   {teams.map((t) => (
                     <SelectItem key={t} value={t}>
                       {t}
@@ -334,7 +334,7 @@ function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Attendance summary</CardTitle>
-            <CardDescription>Today across {team === "all" ? "all teams" : team}</CardDescription>
+            <CardDescription>Today across {team === "all" ? "all clients" : team}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[180px] w-full sm:h-[200px]">
@@ -423,7 +423,7 @@ function DashboardPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Employee</TableHead>
-                <TableHead>Team</TableHead>
+                <TableHead>Client</TableHead>
                 <TableHead>Login</TableHead>
                 <TableHead>Logout</TableHead>
                 <TableHead>Hours</TableHead>

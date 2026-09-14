@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Clock, Percent, UserCheck, UserX } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { CheckInWidget } from "@/components/check-in-widget";
@@ -80,7 +81,7 @@ function AttendancePage() {
         actions={
           <ExportMenu
             filename="attendance"
-            columns={["Date", "Employee", "Team", "Check in", "Check out", "Hours", "OT", "Status"]}
+            columns={["Date", "Employee", "Client", "Check in", "Check out", "Hours", "OT", "Status"]}
             rows={rows.map((r) => [
               r.date,
               r.employeeName,
@@ -98,10 +99,30 @@ function AttendancePage() {
       <CheckInWidget />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Attendance rate" value={pct(attendanceRate)} />
-        <StatCard label="Present days" value={String(totals.present)} />
-        <StatCard label="Late logins" value={String(totals.late)} />
-        <StatCard label="Absent days" value={String(totals.absent)} />
+        <StatCard
+          label="Attendance rate"
+          value={pct(attendanceRate)}
+          icon={Percent}
+          iconClassName="bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Present days"
+          value={String(totals.present)}
+          icon={UserCheck}
+          iconClassName="bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Late logins"
+          value={String(totals.late)}
+          icon={Clock}
+          iconClassName="bg-amber-500/15 text-gray-700 dark:bg-amber-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Absent days"
+          value={String(totals.absent)}
+          icon={UserX}
+          iconClassName="bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300"
+        />
       </div>
 
       <Card>
@@ -128,10 +149,10 @@ function AttendancePage() {
             />
             <Select value={team} onValueChange={setTeam} disabled={!!scope}>
               <SelectTrigger className="lg:w-[160px]">
-                <SelectValue placeholder="Team" />
+                <SelectValue placeholder="Client" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All teams</SelectItem>
+                <SelectItem value="all">All Clients</SelectItem>
                 {teams.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -160,7 +181,7 @@ function AttendancePage() {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Employee</TableHead>
-                <TableHead className="hidden md:table-cell">Team</TableHead>
+                <TableHead className="hidden md:table-cell">Client</TableHead>
                 <TableHead>Check in</TableHead>
                 <TableHead className="hidden sm:table-cell">Check out</TableHead>
                 <TableHead className="hidden lg:table-cell">Hours</TableHead>

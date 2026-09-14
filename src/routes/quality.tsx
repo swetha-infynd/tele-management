@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Award, FileCheck, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
@@ -151,7 +152,7 @@ function QualityPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All teams</SelectItem>
+                <SelectItem value="all">All Clients</SelectItem>
                 {teams.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -161,7 +162,7 @@ function QualityPage() {
             </Select>
             <ExportMenu
               filename="qa-scorecards"
-              columns={["Date", "Agent", "Team", "Reviewer", "Call ID", "Score"]}
+              columns={["Date", "Agent", "Client", "Reviewer", "Call ID", "Score"]}
               rows={rows.map((r) => [
                 r.date,
                 r.employeeName,
@@ -270,11 +271,34 @@ function QualityPage() {
       />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Evaluations" value={String(stats.count)} hint="In current scope" />
-        <StatCard label="Average score" value={`${stats.avg}%`} hint="All parameters" />
-        <StatCard label="Highest score" value={`${stats.best}%`} hint="Best evaluated call" />
-        <StatCard label="Lowest score" value={`${stats.worst}%`} hint="Needs coaching" />
-
+        <StatCard
+          label="Evaluations"
+          value={String(stats.count)}
+          icon={FileCheck}
+          iconClassName="bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300"
+          hint="In current scope"
+        />
+        <StatCard
+          label="Average score"
+          value={`${stats.avg}%`}
+          icon={Award}
+          iconClassName="bg-purple-500/15 text-gray-700 dark:bg-purple-500/25 dark:text-gray-300"
+          hint="All parameters"
+        />
+        <StatCard
+          label="Highest score"
+          value={`${stats.best}%`}
+          icon={TrendingUp}
+          iconClassName="bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300"
+          hint="Best evaluated call"
+        />
+        <StatCard
+          label="Lowest score"
+          value={`${stats.worst}%`}
+          icon={TrendingDown}
+          iconClassName="bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300"
+          hint="Needs coaching"
+        />
       </div>
 
       <Card>
@@ -309,7 +333,7 @@ function QualityPage() {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Agent</TableHead>
-                <TableHead className="hidden md:table-cell">Team</TableHead>
+                <TableHead className="hidden md:table-cell">Client</TableHead>
                 <TableHead className="hidden lg:table-cell">Reviewer</TableHead>
                 <TableHead className="hidden sm:table-cell">Call ID</TableHead>
                 <TableHead className="text-right">Score</TableHead>

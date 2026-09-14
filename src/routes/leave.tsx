@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarPlus, Check, X } from "lucide-react";
+import { CalendarDays, CalendarPlus, Check, CheckCircle2, Clock, Sun, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -132,10 +132,30 @@ function LeavePage() {
       />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="My leave balance" value={`${me?.leaveBalance ?? 0} days`} />
-        <StatCard label="Pending requests" value={String(pending)} />
-        <StatCard label="Approved" value={String(approved)} />
-        <StatCard label="Upcoming holidays" value={String(holidays.length)} />
+        <StatCard
+          label="My leave balance"
+          value={`${me?.leaveBalance ?? 0} days`}
+          icon={CalendarDays}
+          iconClassName="bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Pending requests"
+          value={String(pending)}
+          icon={Clock}
+          iconClassName="bg-amber-500/15 text-gray-700 dark:bg-amber-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Approved"
+          value={String(approved)}
+          icon={CheckCircle2}
+          iconClassName="bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Upcoming holidays"
+          value={String(holidays.length)}
+          icon={Sun}
+          iconClassName="bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300"
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

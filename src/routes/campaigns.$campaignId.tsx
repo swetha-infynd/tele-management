@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { AlertTriangle, CalendarCheck, Clock, IndianRupee, Percent, Phone, PhoneCall, PhoneOff } from "lucide-react";
 import {
   Bar,
   CartesianGrid,
@@ -142,27 +143,35 @@ function CampaignDetailPage() {
         {summary && <RagBadge status={summary.status} />}
       </div>
 
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Calls (7 days)"
           value={num(summary?.calls ?? 0)}
+          icon={PhoneCall}
+          iconClassName="bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300"
           hint={`${pct(summary?.connectRate ?? 0)} connect rate`}
         />
         <StatCard
           label="Sales"
           value={num(summary?.sales ?? 0)}
           delta={summary?.wowSales}
+          icon={CalendarCheck}
+          iconClassName="bg-amber-500/15 text-gray-700 dark:bg-amber-500/25 dark:text-gray-300"
           hint={`Target ${num(summary?.salesTarget ?? 0)} · ${summary?.attainment ?? 0}%`}
         />
         <StatCard
           label="Revenue"
           value={compactInr(summary?.revenue ?? 0)}
           delta={summary?.wowRevenue}
+          icon={IndianRupee}
+          iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
           hint="Booked in the last 7 days"
         />
         <StatCard
           label="Flagged agents"
           value={String(flags.length)}
+          icon={AlertTriangle}
+          iconClassName="bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300"
           hint="Below weekly target 3+ weeks"
         />
       </div>
@@ -322,10 +331,34 @@ function CampaignDetailPage() {
 
         <TabsContent value="dialler" className="mt-4 space-y-4">
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Dial attempts" value={num(dialler?.dialAttempts ?? 0)} hint="Last 14 days" />
-            <StatCard label="Connect rate" value={pct(dialler?.connectRate ?? 0)} hint={`Best hour ${dialler?.bestHour ?? "—"}`} />
-            <StatCard label="No answer" value={pct(dialler?.noAnswerRate ?? 0)} hint={`Weakest hour ${dialler?.worstHour ?? "—"}`} />
-            <StatCard label="Avg talk time" value={talkTime(dialler?.avgTalkTimeSec ?? 0)} hint="Per connected call" />
+            <StatCard
+              label="Dial attempts"
+              value={num(dialler?.dialAttempts ?? 0)}
+              icon={Phone}
+              iconClassName="bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300"
+              hint="Last 14 days"
+            />
+            <StatCard
+              label="Connect rate"
+              value={pct(dialler?.connectRate ?? 0)}
+              icon={Percent}
+              iconClassName="bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300"
+              hint={`Best hour ${dialler?.bestHour ?? "—"}`}
+            />
+            <StatCard
+              label="No answer"
+              value={pct(dialler?.noAnswerRate ?? 0)}
+              icon={PhoneOff}
+              iconClassName="bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300"
+              hint={`Weakest hour ${dialler?.worstHour ?? "—"}`}
+            />
+            <StatCard
+              label="Avg talk time"
+              value={talkTime(dialler?.avgTalkTimeSec ?? 0)}
+              icon={Clock}
+              iconClassName="bg-purple-500/15 text-gray-700 dark:bg-purple-500/25 dark:text-gray-300"
+              hint="Per connected call"
+            />
           </div>
           <Card>
             <CardHeader>

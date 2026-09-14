@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { AlertTriangle, CalendarCheck, IndianRupee, PhoneCall } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -148,16 +149,32 @@ function CampaignsOverviewPage() {
       />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Calls" value={num(totals.calls)} hint={`Across ${rows.length} campaigns`} />
+        <StatCard
+          label="Calls"
+          value={num(totals.calls)}
+          icon={PhoneCall}
+          iconClassName="bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300"
+          hint={`Across ${rows.length} campaigns`}
+        />
         <StatCard
           label="Sales"
           value={num(totals.sales)}
+          icon={CalendarCheck}
+          iconClassName="bg-amber-500/15 text-gray-700 dark:bg-amber-500/25 dark:text-gray-300"
           hint={`Target ${num(totals.target)} · ${attainment.toFixed(1)}%`}
         />
-        <StatCard label="Revenue" value={compactInr(totals.revenue)} hint="Booked in range" />
+        <StatCard
+          label="Revenue"
+          value={compactInr(totals.revenue)}
+          icon={IndianRupee}
+          iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
+          hint="Booked in range"
+        />
         <StatCard
           label="Consistency flags"
           value={String(flags.length)}
+          icon={AlertTriangle}
+          iconClassName="bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300"
           hint="Agents below target 3+ weeks"
         />
       </div>

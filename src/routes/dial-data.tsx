@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Percent, Phone, PhoneCall } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -97,9 +98,24 @@ function DialDataPage() {
       />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <StatCard label="Total Dial Attempts" value={num(totals.dials)} />
-        <StatCard label="Total Connects" value={num(totals.connects)} />
-        <StatCard label="Avg Connect Rate" value={pct(overallConnectRate)} />
+        <StatCard
+          label="Total Dial Attempts"
+          value={num(totals.dials)}
+          icon={Phone}
+          iconClassName="bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Total Connects"
+          value={num(totals.connects)}
+          icon={PhoneCall}
+          iconClassName="bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Avg Connect Rate"
+          value={pct(overallConnectRate)}
+          icon={Percent}
+          iconClassName="bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300"
+        />
       </div>
 
       <Card className="mt-4">

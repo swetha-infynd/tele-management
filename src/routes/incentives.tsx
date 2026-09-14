@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Award, CalendarCheck, IndianRupee, Wallet } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { ExportMenu } from "@/components/export-menu";
@@ -70,7 +71,7 @@ function IncentivesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All teams</SelectItem>
+                <SelectItem value="all">All Clients</SelectItem>
                 {teams.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -80,7 +81,7 @@ function IncentivesPage() {
             </Select>
             <ExportMenu
               filename={`incentives-${period}`}
-              columns={["Agent", "Team", "Sales", "Revenue", "Slab bonus", "Commission", "Total"]}
+              columns={["Agent", "Client", "Sales", "Revenue", "Slab bonus", "Commission", "Total"]}
               rows={rows.map((r) => [
                 r.name,
                 r.team,
@@ -103,16 +104,32 @@ function IncentivesPage() {
       </Tabs>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total payout" value={compactInr(totalPayout)} hint="Bonus + commission" />
-        <StatCard label="Qualified agents" value={`${qualified}/${rows.length}`} hint="Reached a slab" />
+        <StatCard
+          label="Total payout"
+          value={compactInr(totalPayout)}
+          icon={Wallet}
+          iconClassName="bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300"
+          hint="Bonus + commission"
+        />
+        <StatCard
+          label="Qualified agents"
+          value={`${qualified}/${rows.length}`}
+          icon={Award}
+          iconClassName="bg-purple-500/15 text-gray-700 dark:bg-purple-500/25 dark:text-gray-300"
+          hint="Reached a slab"
+        />
         <StatCard
           label="Total sales"
           value={num(rows.reduce((s, r) => s + r.sales, 0))}
+          icon={CalendarCheck}
+          iconClassName="bg-amber-500/15 text-gray-700 dark:bg-amber-500/25 dark:text-gray-300"
           hint="Closed in period"
         />
         <StatCard
           label="Revenue booked"
           value={compactInr(rows.reduce((s, r) => s + r.revenue, 0))}
+          icon={IndianRupee}
+          iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
           hint="Basis for commission"
         />
       </div>
@@ -144,7 +161,7 @@ function IncentivesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Agent</TableHead>
-                <TableHead className="hidden md:table-cell">Team</TableHead>
+                <TableHead className="hidden md:table-cell">Client</TableHead>
                 <TableHead className="text-right">Sales</TableHead>
                 <TableHead className="hidden sm:table-cell text-right">Revenue</TableHead>
                 <TableHead className="hidden lg:table-cell text-right">Slab bonus</TableHead>

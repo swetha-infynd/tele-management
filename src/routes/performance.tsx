@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { CalendarCheck, IndianRupee, Percent, PhoneCall, Target } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -143,11 +144,36 @@ function PerformancePage() {
       />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Calls made" value={num(totals.calls)} />
-        <StatCard label="Leads generated" value={num(totals.leads)} />
-        <StatCard label="Sales closed" value={num(totals.sales)} />
-        <StatCard label="Revenue" value={compactInr(totals.revenue)} />
-        <StatCard label="Conversion rate" value={pct(conversion)} />
+        <StatCard
+          label="Calls made"
+          value={num(totals.calls)}
+          icon={PhoneCall}
+          iconClassName="bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Leads generated"
+          value={num(totals.leads)}
+          icon={Target}
+          iconClassName="bg-purple-500/15 text-gray-700 dark:bg-purple-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Sales closed"
+          value={num(totals.sales)}
+          icon={CalendarCheck}
+          iconClassName="bg-amber-500/15 text-gray-700 dark:bg-amber-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Revenue"
+          value={compactInr(totals.revenue)}
+          icon={IndianRupee}
+          iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
+        />
+        <StatCard
+          label="Conversion rate"
+          value={pct(conversion)}
+          icon={Percent}
+          iconClassName="bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300"
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

@@ -115,7 +115,7 @@ function LeaderboardPage() {
               columns={[
                 "Rank",
                 "Agent",
-                "Team",
+                "Client",
                 "Campaign",
                 "Sales",
                 "Target",
@@ -236,7 +236,7 @@ function LeaderboardPage() {
               <TableRow>
                 <TableHead className="w-14">Rank</TableHead>
                 <TableHead>Agent</TableHead>
-                <TableHead className="hidden lg:table-cell">Team</TableHead>
+                <TableHead className="hidden lg:table-cell">Client</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Sales</TableHead>
                 <TableHead className="min-w-[130px]">Attainment</TableHead>

@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MoreHorizontal, Plus, Trash2, Users } from "lucide-react";
+import { CalendarCheck, MoreHorizontal, PhoneCall, Plus, Sparkles, Tag, Target, Trash2, Users, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 import { ExportMenu } from "@/components/export-menu";
 import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
 import { LeadStatusBadge } from "@/components/status-badges";
 import { EmptyRow, TableSkeleton } from "@/components/table-states";
 import { LeadFormDialog } from "@/components/lead-form-dialog";
@@ -182,16 +183,29 @@ function LeadsPage() {
       />
 
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 xl:grid-cols-5">
-        {pipeline.slice(0, 5).map((p) => (
-          <Card key={p.status}>
-            <CardHeader className="pb-1">
-              <CardTitle className="text-xs font-medium text-muted-foreground">{p.status}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xl font-semibold">{p.count}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {pipeline.slice(0, 5).map((p) => {
+          const cfg =
+            p.status === "New"
+              ? { icon: Sparkles, color: "bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300" }
+              : p.status === "Contacted"
+                ? { icon: PhoneCall, color: "bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300" }
+                : p.status === "Interested"
+                  ? { icon: Target, color: "bg-purple-500/15 text-gray-700 dark:bg-purple-500/25 dark:text-gray-300" }
+                  : p.status === "Converted"
+                    ? { icon: CalendarCheck, color: "bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300" }
+                    : p.status === "Not Interested"
+                      ? { icon: XCircle, color: "bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300" }
+                      : { icon: Tag, color: "bg-slate-500/15 text-gray-700 dark:bg-slate-500/25 dark:text-gray-300" };
+          return (
+            <StatCard
+              key={p.status}
+              label={p.status}
+              value={p.count}
+              icon={cfg.icon}
+              iconClassName={cfg.color}
+            />
+          );
+        })}
       </div>
 
       <Card>
