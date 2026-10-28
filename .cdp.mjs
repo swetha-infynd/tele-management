@@ -1,0 +1,30 @@
+import { writeFileSync } from "node:fs";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const list = await (await fetch("http://127.0.0.1:9222/json/list")).json();
+const page = list.find((t) => t.type === "page");
+if (!page) throw new Error("no page target");
+const ws = new WebSocket(page.webSocketDebuggerUrl);
+await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
+let id = 0;
+const pending = new Map();
+ws.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  if (msg.id && pending.has(msg.id)) { pending.get(msg.id)(msg); pending.delete(msg.id); }
+};
+const send = (method, params = {}) => new Promise((res) => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
+await send("Page.enable");
+await send("Runtime.enable");
+await send("Emulation.setDeviceMetricsOverride", { width: 1600, height: 1200, deviceScaleFactor: 1, mobile: false });
+await send("Page.navigate", { url: "http://127.0.0.1:4173/seed-names.html" });
+await sleep(6000);
+const probe = await send("Runtime.evaluate", { expression: `JSON.stringify({url: location.pathname, rows: document.querySelectorAll('tbody tr').length, moreBtns: [...document.querySelectorAll('button')].filter(b=>/^\\+.*more$/.test(b.textContent.trim())).map(b=>b.textContent.trim())})`, returnByValue: true });
+console.log("probe:", probe.result?.result?.value);
+const click = await send("Runtime.evaluate", { expression: `(()=>{const b=[...document.querySelectorAll('button')].find(b=>/^\\+.*more$/.test(b.textContent.trim())); if(!b) return 'no button'; b.click(); return 'clicked '+b.textContent.trim();})()`, returnByValue: true });
+console.log("click:", click.result?.result?.value);
+await sleep(1500);
+const dlg = await send("Runtime.evaluate", { expression: `JSON.stringify({title: document.querySelector('[role=dialog] h2')?.textContent, items: document.querySelectorAll('[role=dialog] li').length, showing: [...document.querySelectorAll('[role=dialog] div')].map(d=>d.textContent).find(t=>t&&t.startsWith('Showing'))})`, returnByValue: true });
+console.log("dialog:", dlg.result?.result?.value);
+const shot = await send("Page.captureScreenshot", { format: "png" });
+writeFileSync(".dialog-shot.png", Buffer.from(shot.result.data, "base64"));
+console.log("screenshot saved");
+ws.close();

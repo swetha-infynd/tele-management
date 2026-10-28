@@ -12,13 +12,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { initials, inr, longDate, timeAgo } from "@/lib/format";
+import { initials, gbp, longDate, timeAgo } from "@/lib/format";
 import { api, ApiError } from "@/lib/mock/api";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/mock/types";
 import { useSession } from "@/lib/session";
+import { AccessRestricted } from "@/components/access-restricted";
 
 export const Route = createFileRoute("/leads/$leadId")({
   head: () => ({
@@ -51,8 +58,7 @@ function LeadDetailPage() {
     qc.invalidateQueries({ queryKey: ["lead", leadId] });
     qc.invalidateQueries({ queryKey: ["leads"] });
   };
-  const onError = (e: unknown) =>
-    toast.error(e instanceof ApiError ? e.message : "Request failed");
+  const onError = (e: unknown) => toast.error(e instanceof ApiError ? e.message : "Request failed");
 
   const statusMutation = useMutation({
     mutationFn: (next: LeadStatus) => api.updateLead(leadId, { status: next }),
@@ -72,6 +78,12 @@ function LeadDetailPage() {
     },
     onError,
   });
+
+  if (session.role === "agent" && lead && lead.assignedAgentId !== session.employeeId) {
+    return (
+      <AccessRestricted title="Lead details" message="You can only view leads assigned to you." />
+    );
+  }
 
   return (
     <AppShell>
@@ -136,8 +148,11 @@ function LeadDetailPage() {
                 <Separator />
                 <Row label="Status" value={<LeadStatusBadge status={lead.status} />} />
                 <Row label="Assigned agent" value={lead.agentName} />
-                <Row label="Follow-up" value={lead.followUpDate ? longDate(lead.followUpDate) : "—"} />
-                <Row label="Sale value" value={lead.saleAmount ? inr(lead.saleAmount) : "—"} />
+                <Row
+                  label="Follow-up"
+                  value={lead.followUpDate ? longDate(lead.followUpDate) : "—"}
+                />
+                <Row label="Sale value" value={lead.saleAmount ? gbp(lead.saleAmount) : "—"} />
                 <Row label="Created" value={longDate(lead.createdAt)} />
                 <Row label="Last updated" value={timeAgo(lead.updatedAt)} />
               </CardContent>

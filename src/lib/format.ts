@@ -1,14 +1,12 @@
-export const inr = (n: number) =>
-  `₹${Math.round(n).toLocaleString("en-IN")}`;
+export const gbp = (n: number) => `£${Math.round(n).toLocaleString("en-GB")}`;
 
-export const compactInr = (n: number) => {
-  if (n >= 10000000) return `₹${(n / 10000000).toFixed(2)}Cr`;
-  if (n >= 100000) return `₹${(n / 100000).toFixed(2)}L`;
-  if (n >= 1000) return `₹${(n / 1000).toFixed(1)}K`;
-  return `₹${n}`;
+export const compactGbp = (n: number) => {
+  if (n >= 1000000) return `£${(n / 1000000).toFixed(2)}M`;
+  if (n >= 1000) return `£${(n / 1000).toFixed(1)}K`;
+  return `£${Math.round(n)}`;
 };
 
-export const num = (n: number) => n.toLocaleString("en-IN");
+export const num = (n: number) => n.toLocaleString("en-GB");
 
 export const pct = (n: number) => `${n.toFixed(1)}%`;
 
@@ -32,8 +30,7 @@ export const talkTime = (sec: number) =>
 
 export const roleLabel: Record<string, string> = {
   admin: "Admin",
-  manager: "Manager",
-  team_leader: "Team Leader",
+  BDE: "BDE",
   agent: "Agent",
 };
 

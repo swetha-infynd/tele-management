@@ -4,7 +4,7 @@
  * database — the shapes match what a real analytics endpoint would return.
  */
 import { getDb } from "./db";
-import { CAMPAIGNS, TODAY, addDays, iso } from "./seed";
+import { CAMPAIGNS, TODAY, addDays, clientForCampaign, iso } from "./seed";
 import type {
   CampaignSummary,
   ConsistencyFlag,
@@ -199,47 +199,50 @@ export function campaignOverview(from: string, to: string): CampaignSummary[] {
   const db = getDb();
   const prevFrom = shiftRange(from, to).from;
   const prevTo = shiftRange(from, to).to;
-  return getDb().campaigns.map((c) => c.name).map((campaign) => {
-    const inRange = db.performance.filter(
-      (p) => p.campaign === campaign && p.date >= from && p.date <= to,
-    );
-    const prev = db.performance.filter(
-      (p) => p.campaign === campaign && p.date >= prevFrom && p.date <= prevTo,
-    );
-    const sum = (rows: PerformanceRecord[], k: keyof PerformanceRecord) =>
-      rows.reduce((s, r) => s + (r[k] as number), 0);
-    const calls = sum(inRange, "callsMade");
-    const connects = sum(inRange, "callsConnected");
-    const leads = sum(inRange, "leadsGenerated");
-    const sales = sum(inRange, "sales");
-    const revenue = sum(inRange, "revenue");
-    const prevSales = sum(prev, "sales");
-    const prevRevenue = sum(prev, "revenue");
-    const days = Math.max(1, dayDiff(from, to) + 1);
-    const salesTarget = Math.round((campaignWeeklyTarget(campaign) / 7) * days);
-    const attainment = salesTarget ? Number(((sales / salesTarget) * 100).toFixed(1)) : 0;
-    const talk = sum(inRange, "talkTimeSec");
-    return {
-      campaign,
-      agents: new Set(inRange.map((p) => p.employeeId)).size,
-      calls,
-      connects,
-      connectRate: calls ? Number(((connects / calls) * 100).toFixed(1)) : 0,
-      leads,
-      sales,
-      revenue,
-      conversion: leads ? Number(((sales / leads) * 100).toFixed(1)) : 0,
-      avgTalkTimeSec: connects ? Math.round(talk / connects) : 0,
-      salesTarget,
-      attainment,
-      status: statusFor(attainment),
-      wowSales: prevSales ? Number((((sales - prevSales) / prevSales) * 100).toFixed(1)) : 0,
-      wowRevenue: prevRevenue
-        ? Number((((revenue - prevRevenue) / prevRevenue) * 100).toFixed(1))
-        : 0,
-      flags: consistencyFlags(campaign).length,
-    };
-  });
+  return getDb()
+    .campaigns.map((c) => c.name)
+    .map((campaign) => {
+      const inRange = db.performance.filter(
+        (p) => p.campaign === campaign && p.date >= from && p.date <= to,
+      );
+      const prev = db.performance.filter(
+        (p) => p.campaign === campaign && p.date >= prevFrom && p.date <= prevTo,
+      );
+      const sum = (rows: PerformanceRecord[], k: keyof PerformanceRecord) =>
+        rows.reduce((s, r) => s + (r[k] as number), 0);
+      const calls = sum(inRange, "callsMade");
+      const connects = sum(inRange, "callsConnected");
+      const leads = sum(inRange, "leadsGenerated");
+      const sales = sum(inRange, "sales");
+      const revenue = sum(inRange, "revenue");
+      const prevSales = sum(prev, "sales");
+      const prevRevenue = sum(prev, "revenue");
+      const days = Math.max(1, dayDiff(from, to) + 1);
+      const salesTarget = Math.round((campaignWeeklyTarget(campaign) / 7) * days);
+      const attainment = salesTarget ? Number(((sales / salesTarget) * 100).toFixed(1)) : 0;
+      const talk = sum(inRange, "talkTimeSec");
+      return {
+        campaign,
+        client: clientForCampaign(campaign),
+        agents: new Set(inRange.map((p) => p.employeeId)).size,
+        calls,
+        connects,
+        connectRate: calls ? Number(((connects / calls) * 100).toFixed(1)) : 0,
+        leads,
+        sales,
+        revenue,
+        conversion: leads ? Number(((sales / leads) * 100).toFixed(1)) : 0,
+        avgTalkTimeSec: connects ? Math.round(talk / connects) : 0,
+        salesTarget,
+        attainment,
+        status: statusFor(attainment),
+        wowSales: prevSales ? Number((((sales - prevSales) / prevSales) * 100).toFixed(1)) : 0,
+        wowRevenue: prevRevenue
+          ? Number((((revenue - prevRevenue) / prevRevenue) * 100).toFixed(1))
+          : 0,
+        flags: consistencyFlags(campaign).length,
+      };
+    });
 }
 
 function dayDiff(from: string, to: string) {

@@ -5,6 +5,7 @@ import { Award, FileCheck, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
+import { ClientNamesCell } from "@/components/client-names-cell";
 import { ExportMenu } from "@/components/export-menu";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
@@ -24,7 +25,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import {
   Table,
@@ -35,9 +42,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { clientNamesText } from "@/lib/dial-upload";
 import { longDate } from "@/lib/format";
 import { api } from "@/lib/mock/api";
 import { useSession, useTeamScope } from "@/lib/session";
+import { useClientNameIndex } from "@/hooks/use-client-names";
 
 export const Route = createFileRoute("/quality")({
   head: () => ({
@@ -73,13 +82,16 @@ function QualityPage() {
   const { session, can } = useSession();
   const scope = useTeamScope();
   const qc = useQueryClient();
+  const isAgent = session.role === "agent";
   const [team, setTeam] = useState<string>(scope ?? "all");
   const [open, setOpen] = useState(false);
+  const clientNames = useClientNameIndex();
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams"], queryFn: api.listTeams });
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["qa", team],
-    queryFn: () => api.listQa({ team }),
+    queryKey: ["qa", team, isAgent ? session.employeeId : "all"],
+    queryFn: () =>
+      isAgent ? api.listQa({ employeeId: session.employeeId }) : api.listQa({ team }),
   });
   const { data: employees } = useQuery({
     queryKey: ["employees", "all"],
@@ -124,7 +136,8 @@ function QualityPage() {
   });
 
   const stats = useMemo(() => {
-    if (!rows.length) return { avg: 0, best: 0, worst: 0, count: 0, params: {} as Record<string, number> };
+    if (!rows.length)
+      return { avg: 0, best: 0, worst: 0, count: 0, params: {} as Record<string, number> };
     const avg = Math.round(rows.reduce((s, r) => s + r.overall, 0) / rows.length);
     const params: Record<string, number> = {};
     for (const p of PARAMS) {
@@ -143,30 +156,36 @@ function QualityPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Quality monitoring"
-        description="Call evaluations, scorecards and coaching feedback across the floor."
+        title={isAgent ? "My quality scores" : "Quality monitoring"}
+        description={
+          isAgent
+            ? "Your call evaluations and coaching feedback."
+            : "Call evaluations, scorecards and coaching feedback across the floor."
+        }
         actions={
           <>
-            <Select value={team} onValueChange={setTeam} disabled={!!scope}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
-                {teams.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!isAgent && (
+              <Select value={team} onValueChange={setTeam} disabled={!!scope}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {teams.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <ExportMenu
               filename="qa-scorecards"
               columns={["Date", "Agent", "Client", "Reviewer", "Call ID", "Score"]}
               rows={rows.map((r) => [
                 r.date,
                 r.employeeName,
-                r.team,
+                clientNamesText(clientNames.agent(r.employeeName)),
                 r.reviewerName,
                 r.callId,
                 r.overall,
@@ -175,7 +194,9 @@ function QualityPage() {
             {can("review_qa") && (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="secondary">New evaluation</Button>
+                  <Button size="sm" variant="secondary">
+                    New evaluation
+                  </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
                   <DialogHeader>
@@ -362,7 +383,9 @@ function QualityPage() {
                         </p>
                       )}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{r.team}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <ClientNamesCell {...clientNames.agent(r.employeeName)} />
+                    </TableCell>
                     <TableCell className="hidden lg:table-cell">{r.reviewerName}</TableCell>
                     <TableCell className="hidden sm:table-cell font-mono text-xs">
                       {r.callId}
@@ -370,7 +393,11 @@ function QualityPage() {
                     <TableCell className="text-right">
                       <Badge
                         variant={
-                          r.overall >= 85 ? "default" : r.overall >= 70 ? "secondary" : "destructive"
+                          r.overall >= 85
+                            ? "default"
+                            : r.overall >= 70
+                              ? "secondary"
+                              : "destructive"
                         }
                       >
                         {r.overall}%

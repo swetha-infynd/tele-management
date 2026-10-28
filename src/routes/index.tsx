@@ -1,18 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   CalendarCheck,
-  IndianRupee,
+  PoundSterling,
   Percent,
   PhoneCall,
   Sparkles,
@@ -21,21 +13,23 @@ import {
   Users,
 } from "lucide-react";
 
+import { AgentDashboard } from "@/components/agent-dashboard";
 import { AppShell } from "@/components/app-shell";
+import { ClientNamesCell } from "@/components/client-names-cell";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -49,8 +43,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AttendanceStatusBadge } from "@/components/status-badges";
 import { CheckInWidget } from "@/components/check-in-widget";
 import { api } from "@/lib/mock/api";
-import { compactInr, initials, num, shortDate } from "@/lib/format";
+import { compactGbp, initials, num, shortDate } from "@/lib/format";
 import { useSession, useTeamScope } from "@/lib/session";
+import { useClientNameIndex } from "@/hooks/use-client-names";
 import { useState } from "react";
 
 export const Route = createFileRoute("/")({
@@ -65,7 +60,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Operations Dashboard — Apex CRM" },
       {
         property: "og:description",
-        content: "Live floor overview: attendance, calls, leads, sales, revenue, conversion and leaderboard for your BPO team.",
+        content:
+          "Live floor overview: attendance, calls, leads, sales, revenue, conversion and leaderboard for your BPO team.",
       },
     ],
   }),
@@ -83,9 +79,24 @@ const chartConfig = {
 
 function DashboardPage() {
   const { session } = useSession();
+
+  if (session.role === "agent") {
+    return (
+      <AppShell>
+        <AgentDashboard />
+      </AppShell>
+    );
+  }
+
+  return <FloorDashboard />;
+}
+
+function FloorDashboard() {
+  const { session } = useSession();
   const scope = useTeamScope();
   const [team, setTeam] = useState<string>(scope ?? "all");
   const [range, setRange] = useState("14");
+  const clientNames = useClientNameIndex();
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams"], queryFn: api.listTeams });
   const { data: stats, isLoading } = useQuery({
@@ -104,11 +115,14 @@ function DashboardPage() {
     queryKey: ["attendance-today", team],
     queryFn: () => api.listAttendance({ date: new Date().toISOString().slice(0, 10), team }),
   });
-  const { data: ai } = useQuery({ queryKey: ["ai-summary", team], queryFn: () => api.aiDailySummary(team) });
+  const { data: ai } = useQuery({
+    queryKey: ["ai-summary", team],
+    queryFn: () => api.aiDailySummary(team),
+  });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: api.getSettings });
   const { data: followUps = [] } = useQuery({
-    queryKey: ["followups", session.role === "agent" ? session.employeeId : "all"],
-    queryFn: () => api.followUpsDue(session.role === "agent" ? session.employeeId : undefined),
+    queryKey: ["followups", "all"],
+    queryFn: () => api.followUpsDue(),
   });
 
   const attendanceMix = [
@@ -196,9 +210,9 @@ function DashboardPage() {
         />
         <StatCard
           label="Revenue"
-          value={compactInr(stats?.revenue ?? 0)}
+          value={compactGbp(stats?.revenue ?? 0)}
           delta={stats?.deltas.revenue}
-          icon={IndianRupee}
+          icon={PoundSterling}
           iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
           loading={isLoading}
         />
@@ -217,10 +231,18 @@ function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="text-2xl font-bold tracking-tight text-foreground">{monthlyProgress}%</div>
-            <Progress value={monthlyProgress} className="h-2.5 bg-purple-100/80 dark:bg-purple-950/40 [&>div]:bg-purple-300 dark:[&>div]:bg-purple-400/80" />
+            <div className="text-2xl font-bold tracking-tight text-foreground">
+              {monthlyProgress}%
+            </div>
+            <Progress
+              value={monthlyProgress}
+              className="h-2.5 bg-purple-100/80 dark:bg-purple-950/40 [&>div]:bg-purple-300 dark:[&>div]:bg-purple-400/80"
+            />
             <p className="text-xs text-muted-foreground">
-              Target <span className="font-semibold text-foreground">{settings ? compactInr(settings.monthlyRevenueTarget) : "—"}</span>
+              Target{" "}
+              <span className="font-semibold text-foreground">
+                {settings ? compactGbp(settings.monthlyRevenueTarget) : "—"}
+              </span>
             </p>
           </CardContent>
         </Card>
@@ -266,7 +288,9 @@ function DashboardPage() {
                     tickFormatter={shortDate}
                   />
                   <YAxis tickLine={false} axisLine={false} width={40} />
-                  <ChartTooltip content={<ChartTooltipContent labelFormatter={(v) => shortDate(String(v))} />} />
+                  <ChartTooltip
+                    content={<ChartTooltipContent labelFormatter={(v) => shortDate(String(v))} />}
+                  />
                   <Area
                     dataKey="calls"
                     type="monotone"
@@ -297,7 +321,9 @@ function DashboardPage() {
               </div>
               AI Daily Summary
             </CardTitle>
-            <CardDescription className="font-medium text-foreground/90">{ai?.headline ?? "Generating insights…"}</CardDescription>
+            <CardDescription className="font-medium text-foreground/90">
+              {ai?.headline ?? "Generating insights…"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {!ai ? (
@@ -434,7 +460,9 @@ function DashboardPage() {
               {attendance.slice(0, 10).map((a) => (
                 <TableRow key={a.id}>
                   <TableCell className="font-medium">{a.employeeName}</TableCell>
-                  <TableCell className="text-muted-foreground">{a.team}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <ClientNamesCell {...clientNames.agent(a.employeeName)} />
+                  </TableCell>
                   <TableCell>{a.checkIn ?? "—"}</TableCell>
                   <TableCell>{a.checkOut ?? "—"}</TableCell>
                   <TableCell>{a.workingHours ? `${a.workingHours}h` : "—"}</TableCell>

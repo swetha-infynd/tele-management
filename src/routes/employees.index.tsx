@@ -5,6 +5,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
+import { AccessRestricted } from "@/components/access-restricted";
+import { ClientNamesCell } from "@/components/client-names-cell";
 import { EmployeeFormDialog } from "@/components/employee-form-dialog";
 import { ExportMenu } from "@/components/export-menu";
 import { PageHeader } from "@/components/page-header";
@@ -31,7 +33,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -43,6 +51,7 @@ import {
 import { initials, longDate, roleLabel } from "@/lib/format";
 import { api, ApiError } from "@/lib/mock/api";
 import { useSession } from "@/lib/session";
+import { useClientNameIndex } from "@/hooks/use-client-names";
 
 export const Route = createFileRoute("/employees/")({
   head: () => ({
@@ -63,6 +72,21 @@ export const Route = createFileRoute("/employees/")({
 const PAGE_SIZE = 10;
 
 function EmployeesPage() {
+  const { can, session } = useSession();
+
+  if (session.role === "agent" || !can("view_employees")) {
+    return (
+      <AccessRestricted
+        title="Employees"
+        message="The employee directory is available to supervisors and admins only."
+      />
+    );
+  }
+
+  return <EmployeesDirectory />;
+}
+
+function EmployeesDirectory() {
   const { can } = useSession();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
@@ -73,6 +97,7 @@ function EmployeesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const clientNames = useClientNameIndex();
 
   const q = { search, team, role, status, page, pageSize: PAGE_SIZE };
   const { data, isLoading } = useQuery({
@@ -93,12 +118,17 @@ function EmployeesPage() {
 
   const rows = data?.rows ?? [];
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / PAGE_SIZE));
+  const readOnly = !can("manage_employees");
 
   return (
     <AppShell>
       <PageHeader
         title="Employees"
-        description="Directory of every agent, team leader and manager on the floor."
+        description={
+          readOnly
+            ? "Directory of agents and team members on the floor."
+            : "Directory of every agent, team leader and manager on the floor."
+        }
         actions={
           <>
             <ExportMenu
@@ -142,12 +172,18 @@ function EmployeesPage() {
               }}
               className="lg:max-w-xs"
             />
-            <Select value={team} onValueChange={(v) => { setTeam(v); setPage(1); }}>
+            <Select
+              value={team}
+              onValueChange={(v) => {
+                setTeam(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="lg:w-[160px]">
-                <SelectValue placeholder="Team" />
+                <SelectValue placeholder="Client" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All teams</SelectItem>
+                <SelectItem value="all">All Clients</SelectItem>
                 {teams.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -155,19 +191,30 @@ function EmployeesPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={role} onValueChange={(v) => { setRole(v); setPage(1); }}>
+            <Select
+              value={role}
+              onValueChange={(v) => {
+                setRole(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="lg:w-[150px]">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All roles</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="team_leader">Team Leader</SelectItem>
+                <SelectItem value="BDE">BDE</SelectItem>
                 <SelectItem value="agent">Agent</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
+            <Select
+              value={status}
+              onValueChange={(v) => {
+                setStatus(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="lg:w-[140px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -184,7 +231,7 @@ function EmployeesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Employee</TableHead>
-                <TableHead className="hidden md:table-cell">Team</TableHead>
+                <TableHead className="hidden md:table-cell">Client</TableHead>
                 <TableHead className="hidden lg:table-cell">Role</TableHead>
                 <TableHead className="hidden lg:table-cell">Shift</TableHead>
                 <TableHead className="hidden xl:table-cell">Joined</TableHead>
@@ -217,7 +264,9 @@ function EmployeesPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{e.team}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <ClientNamesCell {...clientNames.agent(e.name)} />
+                    </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline">{roleLabel[e.role] ?? e.role}</Badge>
                     </TableCell>
@@ -280,7 +329,12 @@ function EmployeesPage() {
           Showing {rows.length} of {data?.total ?? 0} employees
         </p>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
             Previous
           </Button>
           <span className="text-sm text-muted-foreground">

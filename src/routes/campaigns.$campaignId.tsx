@@ -1,6 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, CalendarCheck, Clock, IndianRupee, Percent, Phone, PhoneCall, PhoneOff } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarCheck,
+  Clock,
+  PoundSterling,
+  Percent,
+  Phone,
+  PhoneCall,
+  PhoneOff,
+} from "lucide-react";
 import {
   Bar,
   CartesianGrid,
@@ -16,6 +25,7 @@ import {
 
 import { AppShell } from "@/components/app-shell";
 import { CampaignDeleteDialog } from "@/components/campaign-delete-dialog";
+import { ClientNamesCell } from "@/components/client-names-cell";
 import { ExportMenu } from "@/components/export-menu";
 import { PageHeader } from "@/components/page-header";
 import { RagBadge, Sparkline } from "@/components/rag-status";
@@ -24,7 +34,13 @@ import { EmptyRow, TableSkeleton } from "@/components/table-states";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -34,8 +50,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { compactInr, num, pct, talkTime } from "@/lib/format";
+import { compactGbp, num, pct, talkTime } from "@/lib/format";
 import { api } from "@/lib/mock/api";
+import { useSession } from "@/lib/session";
+import { useClientNameIndex } from "@/hooks/use-client-names";
 
 export const Route = createFileRoute("/campaigns/$campaignId")({
   head: ({ params }) => ({
@@ -60,6 +78,9 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 function CampaignDetailPage() {
   const { campaignId } = Route.useParams();
   const navigate = useNavigate();
+  const { session } = useSession();
+  const isAdmin = session.role === "admin";
+  const clientNames = useClientNameIndex();
   const days = 7;
   const from = iso(new Date(Date.now() - (days - 1) * 864e5));
   const to = iso(new Date());
@@ -117,7 +138,18 @@ function CampaignDetailPage() {
             </Select>
             <ExportMenu
               filename={`campaign-${campaignId.toLowerCase().replace(/\s+/g, "-")}`}
-              columns={["Agent", "Team", "Calls", "Connected", "Leads", "Sales", "Target", "Attainment %", "Revenue", "Weeks below"]}
+              columns={[
+                "Agent",
+                "Team",
+                "Calls",
+                "Connected",
+                "Leads",
+                "Sales",
+                "Target",
+                "Attainment %",
+                "Revenue",
+                "Weeks below",
+              ]}
               rows={agents.map((a) => [
                 a.employeeName,
                 a.team,
@@ -131,7 +163,7 @@ function CampaignDetailPage() {
                 a.weeksBelow,
               ])}
             />
-            <CampaignDeleteDialog campaignName={campaignId} />
+            {isAdmin && <CampaignDeleteDialog campaignName={campaignId} />}
           </>
         }
       />
@@ -161,9 +193,9 @@ function CampaignDetailPage() {
         />
         <StatCard
           label="Revenue"
-          value={compactInr(summary?.revenue ?? 0)}
+          value={compactGbp(summary?.revenue ?? 0)}
           delta={summary?.wowRevenue}
-          icon={IndianRupee}
+          icon={PoundSterling}
           iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
           hint="Booked in the last 7 days"
         />
@@ -197,7 +229,7 @@ function CampaignDetailPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Agent</TableHead>
-                    <TableHead className="hidden md:table-cell">Team</TableHead>
+                    <TableHead className="hidden md:table-cell">Client</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Calls</TableHead>
                     <TableHead className="hidden lg:table-cell text-right">Connected</TableHead>
@@ -226,7 +258,9 @@ function CampaignDetailPage() {
                               {a.employeeName}
                             </Link>
                           </TableCell>
-                          <TableCell className="hidden md:table-cell">{a.team}</TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <ClientNamesCell {...clientNames.agent(a.employeeName, campaignId)} />
+                          </TableCell>
                           <TableCell>
                             <RagBadge status={a.status} />
                           </TableCell>
@@ -252,7 +286,7 @@ function CampaignDetailPage() {
                             <Sparkline values={a.weeklySales} />
                           </TableCell>
                           <TableCell className="hidden lg:table-cell text-right">
-                            {compactInr(a.revenue)}
+                            {compactGbp(a.revenue)}
                           </TableCell>
                         </TableRow>
                       ))
@@ -318,7 +352,7 @@ function CampaignDetailPage() {
                         <TableCell className="text-right tabular-nums">{w.target}</TableCell>
                         <TableCell className="text-right tabular-nums">{w.attainment}%</TableCell>
                         <TableCell className="hidden sm:table-cell text-right">
-                          {compactInr(w.revenue)}
+                          {compactGbp(w.revenue)}
                         </TableCell>
                       </TableRow>
                     ))
@@ -330,7 +364,7 @@ function CampaignDetailPage() {
         </TabsContent>
 
         <TabsContent value="dialler" className="mt-4 space-y-4">
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Dial attempts"
               value={num(dialler?.dialAttempts ?? 0)}
@@ -373,7 +407,13 @@ function CampaignDetailPage() {
                   <YAxis tick={{ fontSize: 11 }} unit="%" />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="connectRate" name="Connect %" stroke="currentColor" dot={false} />
+                  <Line
+                    type="monotone"
+                    dataKey="connectRate"
+                    name="Connect %"
+                    stroke="currentColor"
+                    dot={false}
+                  />
                   <Line
                     type="monotone"
                     dataKey="noAnswerRate"

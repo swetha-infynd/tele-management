@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { usePreferences } from "@/lib/preferences";
 import { GlobalSearch } from "@/components/global-search";
+import { ThemeToggler } from "@/components/theme-toggler";
 import { api } from "@/lib/mock/api";
 import { initials, roleLabel, timeAgo } from "@/lib/format";
 import { useSession } from "@/lib/session";
@@ -72,6 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Search className="size-4" />
           </Button>
           <div className="ml-auto flex items-center gap-1">
+            <ThemeToggler />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
@@ -99,7 +101,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                         {!n.read && <span className="ml-auto size-1.5 rounded-full bg-primary" />}
                       </div>
                       <span className="text-xs text-muted-foreground">{n.body}</span>
-                      <span className="text-[11px] text-muted-foreground">{timeAgo(n.createdAt)}</span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {timeAgo(n.createdAt)}
+                      </span>
                     </DropdownMenuItem>
                   ))}
                 </ScrollArea>
@@ -130,7 +134,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <DropdownMenuLabel>
                   <div className="grid">
                     <span className="text-sm">{session.name}</span>
-                    <span className="text-xs font-normal text-muted-foreground">{session.email}</span>
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {session.email}
+                    </span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -152,7 +158,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 min-h-[calc(100vh-3.5rem)] space-y-6 p-4 md:p-6 bg-slate-50/70 dark:bg-slate-950/50">
+        <main className="flex-1 min-w-0 min-h-[calc(100vh-3.5rem)] space-y-6 p-4 md:p-6 bg-slate-50/70 dark:bg-slate-950/50">
           {children}
         </main>
         <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />

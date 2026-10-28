@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { AlertTriangle, CalendarCheck, IndianRupee, PhoneCall } from "lucide-react";
+import { AlertTriangle, CalendarCheck, PoundSterling, PhoneCall } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -16,6 +16,7 @@ import {
 } from "recharts";
 
 import { AppShell } from "@/components/app-shell";
+import { AccessRestricted } from "@/components/access-restricted";
 import { CampaignFormDialog } from "@/components/campaign-form-dialog";
 import { ExportMenu } from "@/components/export-menu";
 import { PageHeader } from "@/components/page-header";
@@ -27,7 +28,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -36,8 +43,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { compactInr, num, pct } from "@/lib/format";
+import { compactGbp, num, pct } from "@/lib/format";
 import { api } from "@/lib/mock/api";
+import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/campaigns/")({
   head: () => ({
@@ -66,6 +74,8 @@ const RANGES = [
 ];
 
 function CampaignsOverviewPage() {
+  const { session } = useSession();
+  const isAdmin = session.role === "admin";
   const [range, setRange] = useState("7");
   const days = Number(range);
   const from = iso(new Date(Date.now() - (days - 1) * 864e5));
@@ -83,6 +93,15 @@ function CampaignsOverviewPage() {
     queryKey: ["dialler", "all", days],
     queryFn: () => api.diallerAnalysis(undefined, days),
   });
+
+  if (session.role === "agent") {
+    return (
+      <AccessRestricted
+        title="Campaigns"
+        message="Campaign overviews are available to supervisors and admins. Your campaign activity is on the Dashboard and My Performance."
+      />
+    );
+  }
 
   const totals = rows.reduce(
     (a, c) => ({
@@ -102,7 +121,7 @@ function CampaignsOverviewPage() {
         description="Every campaign on one page, with the same metric set and drill-down into agent level."
         actions={
           <>
-            <CampaignFormDialog />
+            {isAdmin && <CampaignFormDialog />}
             <Select value={range} onValueChange={setRange}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue />
@@ -165,8 +184,8 @@ function CampaignsOverviewPage() {
         />
         <StatCard
           label="Revenue"
-          value={compactInr(totals.revenue)}
-          icon={IndianRupee}
+          value={compactGbp(totals.revenue)}
+          icon={PoundSterling}
           iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
           hint="Booked in range"
         />
@@ -257,7 +276,7 @@ function CampaignsOverviewPage() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-right">
-                        {compactInr(r.revenue)}
+                        {compactGbp(r.revenue)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-right tabular-nums">
                         {r.wowSales > 0 ? "+" : ""}
@@ -300,7 +319,13 @@ function CampaignsOverviewPage() {
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="sales" name="Sales" fill="currentColor" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="salesTarget" name="Target" fill="currentColor" opacity={0.3} radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="salesTarget"
+                  name="Target"
+                  fill="currentColor"
+                  opacity={0.3}
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -321,7 +346,13 @@ function CampaignsOverviewPage() {
                 <YAxis tick={{ fontSize: 11 }} unit="%" />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="connectRate" name="Connect %" stroke="currentColor" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="connectRate"
+                  name="Connect %"
+                  stroke="currentColor"
+                  dot={false}
+                />
                 <Line
                   type="monotone"
                   dataKey="noAnswerRate"

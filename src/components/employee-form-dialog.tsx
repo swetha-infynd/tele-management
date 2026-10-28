@@ -13,7 +13,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api, ApiError, type EmployeeInput } from "@/lib/mock/api";
 import type { Role } from "@/lib/mock/types";
 
@@ -111,13 +117,17 @@ export function EmployeeFormDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="mobile">Mobile</Label>
-            <Input id="mobile" value={form.mobile} onChange={(e) => set("mobile", e.target.value)} />
+            <Input
+              id="mobile"
+              value={form.mobile}
+              onChange={(e) => set("mobile", e.target.value)}
+            />
           </div>
           <div className="grid gap-2">
-            <Label>Team</Label>
+            <Label>Client</Label>
             <Select value={form.team} onValueChange={(v) => set("team", v)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select team" />
+                <SelectValue placeholder="Select client" />
               </SelectTrigger>
               <SelectContent>
                 {teams.map((t) => (
@@ -144,8 +154,7 @@ export function EmployeeFormDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="agent">Agent</SelectItem>
-                <SelectItem value="team_leader">Team Leader</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="BDE">BDE</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>

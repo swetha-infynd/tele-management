@@ -1,0 +1,6 @@
+date,employee_name,campaign,calls_made,calls_connected,leads_generated,sales,revenue,login_hours,avg_talk_time_sec
+2026-10-20,Oliver Smith,Solar UK,85,42,18,4,42000,7.5,185
+2026-10-20,Amelia Jones,Medicare US,72,38,14,3,28500,8.0,210
+2026-10-21,Oliver Smith,Solar UK,91,47,21,5,52500,8.2,195
+2026-10-21,Harry Taylor,Web Design AU,66,31,12,2,19000,6.5,170
+2026-10-22,Amelia Jones,Medicare US,78,40,16,4,38000,8.0,220

@@ -1,4 +1,4 @@
-export type Role = "admin" | "manager" | "team_leader" | "agent";
+export type Role = "admin" | "BDE" | "agent";
 
 export type EmployeeStatus = "Active" | "Inactive";
 
@@ -79,6 +79,20 @@ export interface HourlyDial {
   noAnswer: number;
 }
 
+/** Hour × campaign attendance log derived from dialler performance data. */
+export interface HourlyCampaignLog {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  team: string;
+  date: string;
+  hour: number;
+  campaign: string;
+  dials: number;
+  connects: number;
+  minutes: number;
+}
+
 export interface PerformanceRecord {
   id: string;
   employeeId: string;
@@ -100,6 +114,8 @@ export interface PerformanceRecord {
   dnc: number;
   talkTimeSec: number;
   hourly: HourlyDial[];
+  /** True when dial CSV uploads contributed to this row. */
+  fromUpload?: boolean;
 }
 
 export interface QaScorecard {
@@ -142,12 +158,7 @@ export interface Holiday {
 }
 
 export type NotificationKind =
-  | "followup"
-  | "birthday"
-  | "performance"
-  | "target"
-  | "attendance"
-  | "alert";
+  "followup" | "birthday" | "performance" | "target" | "attendance" | "alert";
 
 export interface AppNotification {
   id: string;
@@ -206,6 +217,8 @@ export interface LeaderboardRow {
   employeeId: string;
   name: string;
   team: string;
+  /** Client account behind the selected campaign (team when all campaigns). */
+  client: string;
   sales: number;
   revenue: number;
   calls: number;
@@ -258,6 +271,7 @@ export interface ConsistencyFlag {
 
 export interface CampaignSummary {
   campaign: string;
+  client: string;
   agents: number;
   calls: number;
   connects: number;
@@ -303,6 +317,9 @@ export interface DiallerAnalysis {
   worstHour: string;
   findings: DiallerFinding[];
   suggestions: string[];
+  /** Set when localStorage dial uploads were merged into this result. */
+  fromUpload?: boolean;
+  uploadBatches?: number;
 }
 
 export interface Campaign {

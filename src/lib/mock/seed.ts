@@ -29,8 +29,8 @@ export function makeRng(seed: number) {
 }
 
 const rng = makeRng(20260731);
-const pick = <T,>(arr: readonly T[]) => arr[Math.floor(rng() * arr.length)] as T;
-const at = <T,>(arr: readonly T[], i: number) => arr[i] as T;
+const pick = <T>(arr: readonly T[]) => arr[Math.floor(rng() * arr.length)] as T;
+const at = <T>(arr: readonly T[], i: number) => arr[i] as T;
 const int = (min: number, max: number) => Math.floor(rng() * (max - min + 1)) + min;
 
 export const TODAY = new Date();
@@ -48,43 +48,177 @@ export function addDays(d: Date, n: number) {
   return c;
 }
 
-export const TEAMS = ["Client A", "Client B", "Client C", "Client D"] as const;
 export const CAMPAIGNS = [
-  "Solar UK",
-  "Medicare US",
-  "Web Design AU",
-  "Insurance CA",
-  "SEO Retainer",
+  "BEC",
+  "Cream Life Insurance",
+  "EDF",
+  "Scottish Power",
+  "Staycovered Over 50s",
 ] as const;
-export const SOURCES = ["Cold Call", "Website", "Referral", "Facebook Ads", "Google Ads", "Email"] as const;
+
+/** Client account behind each campaign — this is what "Client" means in the app. */
+export const CAMPAIGN_META: Record<string, { client: string; country: string; start: string }> = {
+  BEC: {
+    client: "BEC (Broadband Energy Comparison)",
+    country: "United Kingdom",
+    start: "2026-09-01",
+  },
+  "Cream Life Insurance": {
+    client: "Cream Financial",
+    country: "United Kingdom",
+    start: "2026-09-01",
+  },
+  EDF: { client: "My Utility / EDF Energy", country: "United Kingdom", start: "2026-09-01" },
+  "Scottish Power": {
+    client: "Scottish Power – Bill Compare",
+    country: "United Kingdom",
+    start: "2026-09-01",
+  },
+  "Staycovered Over 50s": {
+    client: "Staycovered / National Friendly",
+    country: "United Kingdom",
+    start: "2026-09-01",
+  },
+};
+
+/** Client account a campaign runs for (upload-only campaigns get a derived name). */
+export function clientForCampaign(campaign: string): string {
+  return CAMPAIGN_META[campaign]?.client ?? `${campaign} Client`;
+}
+
+/** Every client account on the floor. Employee.team holds one of these. */
+export const CLIENTS: string[] = CAMPAIGNS.map((c) => clientForCampaign(c));
+
+/** Client an agent belongs to: the account behind their primary campaign. */
+export function clientForAgent(agentIndex: number): string {
+  return clientForCampaign(campaignsForAgent(agentIndex)[0]!);
+}
+
+/** Teams are client accounts now; kept as an alias so existing imports keep working. */
+export const TEAMS = CLIENTS;
+export const SOURCES = [
+  "Cold Call",
+  "Website",
+  "Referral",
+  "Facebook Ads",
+  "Google Ads",
+  "Email",
+] as const;
 
 const FIRST = [
-  "Oliver", "Amelia", "Harry", "Isla", "George", "Ava", "Jack", "Freya", "Charlie", "Poppy",
-  "Thomas", "Emily", "Alfie", "Sophie", "Henry", "Grace", "Oscar", "Ella", "Archie", "Chloe",
-  "Freddie", "Daisy", "Leo", "Millie", "Arthur",
+  "Oliver",
+  "Amelia",
+  "Harry",
+  "Isla",
+  "George",
+  "Ava",
+  "Jack",
+  "Freya",
+  "Charlie",
+  "Poppy",
+  "Thomas",
+  "Emily",
+  "Alfie",
+  "Sophie",
+  "Henry",
+  "Grace",
+  "Oscar",
+  "Ella",
+  "Archie",
+  "Chloe",
+  "Freddie",
+  "Daisy",
+  "Leo",
+  "Millie",
+  "Arthur",
 ];
 const LAST = [
-  "Smith", "Jones", "Taylor", "Brown", "Wilson", "Davies", "Evans", "Thomas", "Roberts", "Walker",
+  "Smith",
+  "Jones",
+  "Taylor",
+  "Brown",
+  "Wilson",
+  "Davies",
+  "Evans",
+  "Thomas",
+  "Roberts",
+  "Walker",
 ];
 const BIZ = [
-  "Bright Solar Ltd", "Nova Health UK", "PixelForge Studio", "SafeGuard Insurance", "UrbanEats",
-  "GreenLeaf Farms", "Titan Logistics", "BlueWave Media", "Corex Dental", "Lumen Realty",
-  "Peak Fitness", "Nimbus Cloud", "Vertex Legal", "Harbour Cafe", "Stellar Autos",
+  "Bright Solar Ltd",
+  "Nova Health UK",
+  "PixelForge Studio",
+  "SafeGuard Insurance",
+  "UrbanEats",
+  "GreenLeaf Farms",
+  "Titan Logistics",
+  "BlueWave Media",
+  "Corex Dental",
+  "Lumen Realty",
+  "Peak Fitness",
+  "Nimbus Cloud",
+  "Vertex Legal",
+  "Harbour Cafe",
+  "Stellar Autos",
 ];
 const AVATAR_COLORS = ["#0f172a", "#334155", "#475569", "#1e293b", "#64748b"];
 
 export const MANAGERS = ["Charlotte Hughes", "James Whitfield"];
 
+/**
+ * Real Infynd floor agents (from Call Details exports under `Infynd CRM/`).
+ * Seeded as employees so uploaded dial data can attribute per-agent performance.
+ * System/QA service accounts are intentionally omitted.
+ */
+export const INFYND_AGENTS = [
+  "Allana Hendry",
+  "Andrea Newson",
+  "Angeline Lambert-van Zyl",
+  "Annette Duman",
+  "Charlee Fradgley",
+  "Clive Wilkinson",
+  "Colleen Leyland",
+  "Deb Kaya",
+  "Denise Barsby",
+  "Elaine Hall",
+  "Emma Cowles",
+  "Emma Edwards",
+  "Emma Garrett",
+  "Fateemah Lawal",
+  "Helen Hargreaves",
+  "Jaco Van Zyl",
+  "Jan Aldred",
+  "Janet Lord",
+  "Jennifer Anne Purdey",
+  "Jo Bicakli",
+  "Julie Deveci",
+  "Katie Jones",
+  "Lisa Burton",
+  "Lorren Dereli",
+  "Mandy Smith",
+  "Michelle Black",
+  "Ness Keskin",
+  "Paige Smyth",
+  "Rebecca Kemple",
+  "Ruth Parkinson",
+  "Senay Alice Savasci",
+  "Shelley Jones",
+  "Sonya Abeijon",
+  "Vanessa Vine",
+  "Zara Joyce",
+] as const;
+
 export function seedEmployees(): Employee[] {
   const employees: Employee[] = [];
 
+  // One BDE per client account; admin oversees "Management" (no client).
   const staff: Array<{ name: string; role: Role; team: string }> = [
     { name: "Charlotte Hughes", role: "admin", team: "Management" },
-    { name: "James Whitfield", role: "manager", team: "Management" },
-    { name: "Daniel Carter", role: "team_leader", team: "Client A" },
-    { name: "Sophie Bennett", role: "team_leader", team: "Client B" },
-    { name: "Liam Fletcher", role: "team_leader", team: "Client C" },
-    { name: "Hannah Price", role: "team_leader", team: "Client D" },
+    { name: "James Whitfield", role: "BDE", team: CLIENTS[0]! },
+    { name: "Daniel Carter", role: "BDE", team: CLIENTS[1]! },
+    { name: "Sophie Bennett", role: "BDE", team: CLIENTS[2]! },
+    { name: "Liam Fletcher", role: "BDE", team: CLIENTS[3]! },
+    { name: "Hannah Price", role: "BDE", team: CLIENTS[4]! },
   ];
 
   staff.forEach((s, i) => {
@@ -106,23 +240,50 @@ export function seedEmployees(): Employee[] {
     });
   });
 
-  for (let i = 0; i < 25; i++) {
+  // Infynd floor agents — names match CSV Agent column for upload attribution.
+  // Team = the client account behind the campaign this agent dials (see seedPerformance).
+  INFYND_AGENTS.forEach((name, i) => {
+    const team = clientForAgent(i);
+    const leader = staff.find((s) => s.team === team)!.name;
+    const parts = name.split(" ");
+    const first = (parts[0] ?? name).toLowerCase();
+    const last = (parts[parts.length - 1] ?? "").toLowerCase();
+    employees.push({
+      id: `emp-${String(employees.length + 1).padStart(3, "0")}`,
+      employeeId: `BPO-${3000 + i}`,
+      name,
+      email: `${first}.${last}${i > 0 ? i : ""}@apexbpo.co.uk`,
+      mobile: `+44 7${int(100000000, 899999999)}`,
+      team,
+      manager: leader,
+      role: "agent",
+      joiningDate: iso(addDays(TODAY, -int(60, 800))),
+      shift: i % 5 === 0 ? "Night" : i % 3 === 0 ? "Afternoon" : "Morning",
+      status: "Active",
+      leaveBalance: int(2, 16),
+      commissionRate: 2.5,
+      avatarColor: at(AVATAR_COLORS, i % AVATAR_COLORS.length),
+    });
+  });
+
+  for (let i = 0; i < 10; i++) {
     const first = at(FIRST, i % FIRST.length);
     const last = pick(LAST);
-    const team = at(TEAMS, i % TEAMS.length);
+    // Continues the agent index past the Infynd roster so campaigns line up.
+    const team = clientForAgent(INFYND_AGENTS.length + i);
     const leader = staff.find((s) => s.team === team)!.name;
     employees.push({
       id: `emp-${String(employees.length + 1).padStart(3, "0")}`,
       employeeId: `BPO-${2000 + i}`,
       name: `${first} ${last}`,
-      email: `${first.toLowerCase()}.${last.toLowerCase()}@apexbpo.co.uk`,
+      email: `${first.toLowerCase()}.${last.toLowerCase()}${i}@apexbpo.co.uk`,
       mobile: `+44 7${int(100000000, 899999999)}`,
       team,
       manager: leader,
       role: "agent",
       joiningDate: iso(addDays(TODAY, -int(30, 900))),
       shift: i % 5 === 0 ? "Night" : i % 3 === 0 ? "Afternoon" : "Morning",
-      status: i === 23 ? "Inactive" : "Active",
+      status: i === 9 ? "Inactive" : "Active",
       leaveBalance: int(2, 16),
       commissionRate: 2.5,
       avatarColor: at(AVATAR_COLORS, i % AVATAR_COLORS.length),
@@ -186,11 +347,11 @@ export function campaignsForAgent(index: number): string[] {
 
 /** Relative health of each campaign, so comparisons are meaningful. */
 const CAMPAIGN_FACTOR: Record<string, number> = {
-  "Solar UK": 1.15,
-  "Medicare US": 1.0,
-  "Web Design AU": 0.82,
-  "Insurance CA": 0.93,
-  "SEO Retainer": 0.72,
+  BEC: 1.15,
+  "Cream Life Insurance": 1.0,
+  EDF: 1.08,
+  "Scottish Power": 0.93,
+  "Staycovered Over 50s": 0.85,
 };
 
 function hourlyDials(total: number, connectBase: number, shiftStart: number) {
@@ -216,7 +377,10 @@ function hourlyDials(total: number, connectBase: number, shiftStart: number) {
   return out;
 }
 
-export function seedPerformance(employees: Employee[], attendance: AttendanceRecord[]): PerformanceRecord[] {
+export function seedPerformance(
+  employees: Employee[],
+  attendance: AttendanceRecord[],
+): PerformanceRecord[] {
   const byKey = new Map(attendance.map((a) => [`${a.employeeId}|${a.date}`, a]));
   const rows: PerformanceRecord[] = [];
   const agents = employees.filter((e) => e.role === "agent" && e.status === "Active");
@@ -331,7 +495,7 @@ export function seedLeads(employees: Employee[]): Lead[] {
 
 export function seedQa(employees: Employee[]): QaScorecard[] {
   const agents = employees.filter((e) => e.role === "agent" && e.status === "Active");
-  const reviewers = employees.filter((e) => e.role === "team_leader" || e.role === "manager");
+  const reviewers = employees.filter((e) => e.role === "BDE" || e.role === "admin");
   const rows: QaScorecard[] = [];
   for (let i = 0; i < 90; i++) {
     const a = pick(agents);
@@ -343,9 +507,7 @@ export function seedQa(employees: Employee[]): QaScorecard[] {
       compliance: int(7, 10),
       closing: int(4, 10),
     };
-    const overall = Math.round(
-      (Object.values(scores).reduce((s, v) => s + v, 0) / 60) * 100,
-    );
+    const overall = Math.round((Object.values(scores).reduce((s, v) => s + v, 0) / 60) * 100);
     rows.push({
       id: `qa-${String(i + 1).padStart(3, "0")}`,
       employeeId: a.id,
@@ -424,13 +586,55 @@ export function seedNotifications(): AppNotification[] {
     severity,
   });
   return [
-    mk(1, "alert", "Sales dropped 20% vs yesterday", "Client B accounted for most of the decline.", "critical", 25),
-    mk(2, "attendance", "Attendance below 85%", "4 agents have not checked in for the morning shift.", "warning", 60),
-    mk(3, "followup", "12 follow-ups due today", "Assigned across Client A and Client C.", "info", 95),
-    mk(4, "performance", "Oliver achieved highest conversion", "31.5% conversion rate today.", "success", 150),
-    mk(5, "target", "Monthly target at 78%", "Projected to close at 112% at the current pace.", "info", 320),
+    mk(
+      1,
+      "alert",
+      "Sales dropped 20% vs yesterday",
+      "My Utility / EDF Energy accounted for most of the decline.",
+      "critical",
+      25,
+    ),
+    mk(
+      2,
+      "attendance",
+      "Attendance below 85%",
+      "4 agents have not checked in for the morning shift.",
+      "warning",
+      60,
+    ),
+    mk(
+      3,
+      "followup",
+      "12 follow-ups due today",
+      "Assigned across BEC (Broadband Energy Comparison) and Scottish Power – Bill Compare.",
+      "info",
+      95,
+    ),
+    mk(
+      4,
+      "performance",
+      "Oliver achieved highest conversion",
+      "31.5% conversion rate today.",
+      "success",
+      150,
+    ),
+    mk(
+      5,
+      "target",
+      "Monthly target at 78%",
+      "Projected to close at 112% at the current pace.",
+      "info",
+      320,
+    ),
     mk(6, "birthday", "Birthday reminder", "Amelia Roberts' birthday is tomorrow.", "info", 700),
-    mk(7, "performance", "Harry below target 3 days in a row", "Coaching recommended on objection handling.", "warning", 900),
+    mk(
+      7,
+      "performance",
+      "Harry below target 3 days in a row",
+      "Coaching recommended on objection handling.",
+      "warning",
+      900,
+    ),
   ];
 }
 

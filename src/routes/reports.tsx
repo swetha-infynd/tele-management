@@ -11,7 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -160,13 +166,13 @@ function ReportsPage() {
             <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label>Team</Label>
+            <Label>Client</Label>
             <Select value={team} onValueChange={setTeam} disabled={!!scope}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All teams</SelectItem>
+                <SelectItem value="all">All Clients</SelectItem>
                 {teams.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
@@ -192,7 +198,11 @@ function ReportsPage() {
             </Select>
           </div>
           <div className="md:col-span-5">
-            <Button variant="secondary" onClick={() => generate.mutate()} disabled={generate.isPending}>
+            <Button
+              variant="secondary"
+              onClick={() => generate.mutate()}
+              disabled={generate.isPending}
+            >
               {generate.isPending ? "Generating…" : "Generate report"}
             </Button>
           </div>

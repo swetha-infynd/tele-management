@@ -210,7 +210,7 @@ export function LeadFormDialog({
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="saleAmount">Sale amount (₹)</Label>
+            <Label htmlFor="saleAmount">Sale amount (£)</Label>
             <Input
               id="saleAmount"
               type="number"

@@ -7,7 +7,11 @@ import { AppShell } from "@/components/app-shell";
 import { EmployeeFormDialog } from "@/components/employee-form-dialog";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
-import { AttendanceStatusBadge, LeadStatusBadge, LeaveStatusBadge } from "@/components/status-badges";
+import {
+  AttendanceStatusBadge,
+  LeadStatusBadge,
+  LeaveStatusBadge,
+} from "@/components/status-badges";
 import { EmptyRow } from "@/components/table-states";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +29,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { compactInr, initials, inr, longDate, num, pct, roleLabel, talkTime } from "@/lib/format";
+import { compactGbp, initials, gbp, longDate, num, pct, roleLabel, talkTime } from "@/lib/format";
 import { addDays, api, iso } from "@/lib/mock/api";
+import { useSession } from "@/lib/session";
+import { AccessRestricted } from "@/components/access-restricted";
 
 export const Route = createFileRoute("/employees/$employeeId")({
   head: () => ({
@@ -46,6 +52,7 @@ export const Route = createFileRoute("/employees/$employeeId")({
 
 function EmployeeDetailPage() {
   const { employeeId } = Route.useParams();
+  const { session, can } = useSession();
   const [editOpen, setEditOpen] = useState(false);
   const to = iso(new Date());
   const from = iso(addDays(new Date(), -29));
@@ -81,6 +88,20 @@ function EmployeeDetailPage() {
 
   const p = perf[0];
 
+  if (session.role === "agent" && employeeId !== session.employeeId) {
+    return (
+      <AccessRestricted title="Employee profile" message="You can only view your own profile." />
+    );
+  }
+  if (session.role !== "agent" && !can("view_employees") && employeeId !== session.employeeId) {
+    return (
+      <AccessRestricted
+        title="Employee profile"
+        message="You do not have permission to view other employee profiles."
+      />
+    );
+  }
+
   if (isLoading || !emp) {
     return (
       <AppShell>
@@ -101,7 +122,13 @@ function EmployeeDetailPage() {
       <PageHeader
         title={emp.name}
         description={`${emp.employeeId} • ${emp.team} • ${roleLabel[emp.role] ?? emp.role}`}
-        actions={<Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>Edit profile</Button>}
+        actions={
+          can("manage_employees") ? (
+            <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
+              Edit profile
+            </Button>
+          ) : null
+        }
       />
 
       <div className="grid gap-4 lg:grid-cols-4">
@@ -128,7 +155,7 @@ function EmployeeDetailPage() {
         <div className="space-y-4 lg:col-span-3">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Sales (30d)" value={num(p?.sales ?? 0)} />
-            <StatCard label="Revenue (30d)" value={compactInr(p?.revenue ?? 0)} />
+            <StatCard label="Revenue (30d)" value={compactGbp(p?.revenue ?? 0)} />
             <StatCard label="Conversion" value={pct(p?.conversion ?? 0)} />
             <StatCard label="Avg QA score" value={`${p?.qualityScore ?? 0}%`} />
           </div>
@@ -184,7 +211,7 @@ function EmployeeDetailPage() {
               <Metric label="Leads generated" value={num(p?.leadsGenerated ?? 0)} />
               <Metric label="Avg talk time" value={talkTime(p?.avgTalkTimeSec ?? 0)} />
               <Metric label="Login hours" value={`${p?.loginHours ?? 0}h`} />
-              <Metric label="Revenue" value={inr(p?.revenue ?? 0)} />
+              <Metric label="Revenue" value={gbp(p?.revenue ?? 0)} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -263,7 +290,7 @@ function EmployeeDetailPage() {
                         <LeadStatusBadge status={l.status} />
                       </TableCell>
                       <TableCell className="text-right">
-                        {l.saleAmount ? inr(l.saleAmount) : "—"}
+                        {l.saleAmount ? gbp(l.saleAmount) : "—"}
                       </TableCell>
                     </TableRow>
                   ))}

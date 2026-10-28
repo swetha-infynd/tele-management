@@ -4,16 +4,23 @@ import { Bot, Send, Sparkles, Star, User } from "lucide-react";
 import { useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
+import { AccessRestricted } from "@/components/access-restricted";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, type ChatMessage } from "@/lib/mock/api";
-import { useTeamScope } from "@/lib/session";
+import { useSession, useTeamScope } from "@/lib/session";
 
 export const Route = createFileRoute("/ai-insights")({
   head: () => ({
@@ -43,6 +50,7 @@ const SUGGESTIONS = [
 ];
 
 function AiInsightsPage() {
+  const { session } = useSession();
   const scope = useTeamScope();
   const [team, setTeam] = useState<string>(scope ?? "all");
   const [input, setInput] = useState("");
@@ -68,12 +76,26 @@ function AiInsightsPage() {
     onSuccess: (m) => setMessages((prev) => [...prev, m]),
   });
 
+  if (session.role === "agent") {
+    return (
+      <AccessRestricted
+        title="AI insights"
+        message="Floor-level AI analysis is available to managers and team leaders."
+      />
+    );
+  }
+
   const send = (q: string) => {
     const question = q.trim();
     if (!question || ask.isPending) return;
     setMessages((prev) => [
       ...prev,
-      { id: `u-${Date.now()}`, role: "user", content: question, createdAt: new Date().toISOString() },
+      {
+        id: `u-${Date.now()}`,
+        role: "user",
+        content: question,
+        createdAt: new Date().toISOString(),
+      },
     ]);
     setInput("");
     ask.mutate(question);
@@ -101,7 +123,7 @@ function AiInsightsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All teams</SelectItem>
+              <SelectItem value="all">All Clients</SelectItem>
               {teams.map((t) => (
                 <SelectItem key={t} value={t}>
                   {t}

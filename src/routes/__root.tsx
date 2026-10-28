@@ -1,17 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  Outlet,
-  Link,
-  createRootRouteWithContext,
-  useRouter,
-} from "@tanstack/react-router";
+import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SessionProvider } from "@/lib/session";
 import { PreferencesProvider } from "@/lib/preferences";
 import { Toaster } from "@/components/ui/sonner";
-
 
 function NotFoundComponent() {
   return (
@@ -111,4 +105,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

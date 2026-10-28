@@ -1,16 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Award, CalendarCheck, IndianRupee, Wallet } from "lucide-react";
+import { Award, CalendarCheck, PoundSterling, Wallet } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { ClientNamesCell } from "@/components/client-names-cell";
 import { ExportMenu } from "@/components/export-menu";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { EmptyRow, TableSkeleton } from "@/components/table-states";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -20,9 +27,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { compactInr, inr, num } from "@/lib/format";
+import { clientNamesText } from "@/lib/dial-upload";
+import { compactGbp, gbp, num } from "@/lib/format";
 import { api } from "@/lib/mock/api";
-import { useTeamScope } from "@/lib/session";
+import { useSession, useTeamScope } from "@/lib/session";
+import { useClientNameIndex } from "@/hooks/use-client-names";
 
 export const Route = createFileRoute("/incentives")({
   head: () => ({
@@ -44,17 +53,26 @@ export const Route = createFileRoute("/incentives")({
 });
 
 function IncentivesPage() {
+  const { session } = useSession();
   const scope = useTeamScope();
+  const isAgent = session.role === "agent";
   const [period, setPeriod] = useState<"weekly" | "monthly">("monthly");
   const [team, setTeam] = useState<string>(scope ?? "all");
+  const clientNames = useClientNameIndex();
 
   const { data: teams = [] } = useQuery({ queryKey: ["teams"], queryFn: api.listTeams });
   const { data, isLoading } = useQuery({
-    queryKey: ["incentives", period, team],
-    queryFn: () => api.incentives(period, team === "all" ? undefined : team),
+    queryKey: ["incentives", period, team, isAgent ? session.employeeId : "all"],
+    queryFn: () =>
+      api.incentives(
+        period,
+        isAgent ? undefined : team === "all" ? undefined : team,
+        isAgent ? session.employeeId : undefined,
+      ),
   });
 
-  const rows = data?.rows ?? [];
+  const allRows = data?.rows ?? [];
+  const rows = isAgent ? allRows.filter((r) => r.employeeId === session.employeeId) : allRows;
   const slabs = data?.slabs ?? [];
   const totalPayout = rows.reduce((s, r) => s + r.total, 0);
   const qualified = rows.filter((r) => r.total > 0).length;
@@ -62,29 +80,35 @@ function IncentivesPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Incentives"
-        description="Slab bonuses and revenue commission calculated from booked sales."
+        title={isAgent ? "My Incentives" : "Incentives"}
+        description={
+          isAgent
+            ? "Your slab bonuses and revenue commission from booked sales."
+            : "Slab bonuses and revenue commission calculated from booked sales."
+        }
         actions={
           <>
-            <Select value={team} onValueChange={setTeam} disabled={!!scope}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
-                {teams.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!isAgent && (
+              <Select value={team} onValueChange={setTeam} disabled={!!scope}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {teams.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <ExportMenu
               filename={`incentives-${period}`}
               columns={["Agent", "Client", "Sales", "Revenue", "Slab bonus", "Commission", "Total"]}
               rows={rows.map((r) => [
                 r.name,
-                r.team,
+                clientNamesText(clientNames.agent(r.name)),
                 r.sales,
                 r.revenue,
                 r.slabAmount,
@@ -106,7 +130,7 @@ function IncentivesPage() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Total payout"
-          value={compactInr(totalPayout)}
+          value={compactGbp(totalPayout)}
           icon={Wallet}
           iconClassName="bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300"
           hint="Bonus + commission"
@@ -127,8 +151,8 @@ function IncentivesPage() {
         />
         <StatCard
           label="Revenue booked"
-          value={compactInr(rows.reduce((s, r) => s + r.revenue, 0))}
-          icon={IndianRupee}
+          value={compactGbp(rows.reduce((s, r) => s + r.revenue, 0))}
+          icon={PoundSterling}
           iconClassName="bg-teal-500/15 text-gray-700 dark:bg-teal-500/25 dark:text-gray-300"
           hint="Basis for commission"
         />
@@ -145,7 +169,7 @@ function IncentivesPage() {
           {slabs.map((s) => (
             <div key={s.minSales} className="rounded-md border px-4 py-3">
               <p className="text-xs text-muted-foreground">{s.minSales}+ sales</p>
-              <p className="text-lg font-semibold">{inr(s.amount)}</p>
+              <p className="text-lg font-semibold">{gbp(s.amount)}</p>
             </div>
           ))}
         </CardContent>
@@ -186,19 +210,21 @@ function IncentivesPage() {
                         {r.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{r.team}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <ClientNamesCell {...clientNames.agent(r.name)} />
+                    </TableCell>
                     <TableCell className="text-right">{num(r.sales)}</TableCell>
                     <TableCell className="hidden sm:table-cell text-right">
-                      {compactInr(r.revenue)}
+                      {compactGbp(r.revenue)}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-right">
-                      {r.slabAmount ? inr(r.slabAmount) : "—"}
+                      {r.slabAmount ? gbp(r.slabAmount) : "—"}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-right">
-                      {inr(r.commission)}
+                      {gbp(r.commission)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Badge variant={r.total > 0 ? "default" : "outline"}>{inr(r.total)}</Badge>
+                      <Badge variant={r.total > 0 ? "default" : "outline"}>{gbp(r.total)}</Badge>
                     </TableCell>
                   </TableRow>
                 ))

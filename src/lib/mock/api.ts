@@ -7,7 +7,9 @@
  * changes in the UI layer.
  */
 import { dayOffset, getDb, today } from "./db";
-import { CAMPAIGNS, SOURCES, TEAMS, addDays, iso } from "./seed";
+import { CAMPAIGNS, SOURCES, TEAMS, addDays, clientForCampaign, iso } from "./seed";
+
+export { clientForCampaign };
 import {
   campaignOverview as campaignOverviewSync,
   consistencyFlags as consistencyFlagsSync,
@@ -17,11 +19,19 @@ import {
   weeksBelowTarget,
   statusFor,
 } from "./analytics";
+import {
+  loadDialUploads,
+  mergeUploadsIntoCampaignRollup,
+  mergeUploadsIntoDialler,
+  normalizeAgentName,
+  uploadAgentStats,
+} from "../dial-upload";
 import type {
   AppNotification,
   AttendanceRecord,
   DashboardStats,
   Employee,
+  HourlyCampaignLog,
   IncentiveRow,
   Lead,
   LeadStatus,
@@ -86,7 +96,7 @@ export async function login(email: string, password: string): Promise<Session> {
 
 export async function listDemoAccounts(): Promise<Session[]> {
   const db = getDb();
-  const roles: Role[] = ["admin", "manager", "team_leader", "agent"];
+  const roles: Role[] = ["admin", "BDE", "agent"];
   return delay(
     roles.map((r) => {
       const e = db.employees.find((x) => x.role === r && x.status === "Active")!;
@@ -257,19 +267,30 @@ export async function checkOut(employeeId: string): Promise<AttendanceRecord> {
 
 export async function getMyAttendanceToday(employeeId: string): Promise<AttendanceRecord | null> {
   const db = getDb();
-  return delay(db.attendance.find((a) => a.employeeId === employeeId && a.date === today()) ?? null);
+  return delay(
+    db.attendance.find((a) => a.employeeId === employeeId && a.date === today()) ?? null,
+  );
 }
 
-export async function attendanceSummary(params: { from: string; to: string; team?: string }) {
+export async function attendanceSummary(params: {
+  from: string;
+  to: string;
+  team?: string;
+  employeeId?: string;
+}) {
   const db = getDb();
   const empById = new Map(db.employees.map((e) => [e.id, e]));
   const rows = db.attendance.filter(
     (a) =>
       a.date >= params.from &&
       a.date <= params.to &&
+      (!params.employeeId || a.employeeId === params.employeeId) &&
       (!params.team || params.team === "all" || empById.get(a.employeeId)?.team === params.team),
   );
-  const byDate = new Map<string, { present: number; late: number; absent: number; leave: number }>();
+  const byDate = new Map<
+    string,
+    { present: number; late: number; absent: number; leave: number }
+  >();
   for (const r of rows) {
     const b = byDate.get(r.date) ?? { present: 0, late: 0, absent: 0, leave: 0 };
     if (r.status === "Present") b.present++;
@@ -289,6 +310,8 @@ export async function attendanceSummary(params: { from: string; to: string; team
 
 export interface LeadRow extends Lead {
   agentName: string;
+  /** Client account behind this lead's campaign. */
+  client: string;
 }
 
 export interface LeadQuery {
@@ -326,9 +349,11 @@ export async function listLeads(q: LeadQuery = {}): Promise<Paginated<LeadRow>> 
   const page = q.page ?? 1;
   const pageSize = q.pageSize ?? 10;
   return delay({
-    rows: rows
-      .slice((page - 1) * pageSize, page * pageSize)
-      .map((l) => ({ ...l, agentName: empById.get(l.assignedAgentId)?.name ?? "Unassigned" })),
+    rows: rows.slice((page - 1) * pageSize, page * pageSize).map((l) => ({
+      ...l,
+      agentName: empById.get(l.assignedAgentId)?.name ?? "Unassigned",
+      client: clientForCampaign(l.campaign),
+    })),
     total: rows.length,
     page,
     pageSize,
@@ -340,7 +365,11 @@ export async function getLead(id: string): Promise<LeadRow> {
   const lead = db.leads.find((l) => l.id === id);
   if (!lead) throw new ApiError("Lead not found", 404);
   const agent = db.employees.find((e) => e.id === lead.assignedAgentId);
-  return delay({ ...lead, agentName: agent?.name ?? "Unassigned" });
+  return delay({
+    ...lead,
+    agentName: agent?.name ?? "Unassigned",
+    client: clientForCampaign(lead.campaign),
+  });
 }
 
 export type LeadInput = Pick<
@@ -399,7 +428,10 @@ export async function addLeadNote(id: string, author: string, body: string): Pro
   return delay(lead);
 }
 
-export async function bulkAssignLeads(ids: string[], agentId: string): Promise<{ updated: number }> {
+export async function bulkAssignLeads(
+  ids: string[],
+  agentId: string,
+): Promise<{ updated: number }> {
   const db = getDb();
   let updated = 0;
   for (const l of db.leads) {
@@ -431,7 +463,11 @@ export async function followUpsDue(employeeId?: string): Promise<LeadRow[]> {
     db.leads
       .filter((l) => l.followUpDate && l.followUpDate <= t)
       .filter((l) => !employeeId || l.assignedAgentId === employeeId)
-      .map((l) => ({ ...l, agentName: empById.get(l.assignedAgentId)?.name ?? "—" })),
+      .map((l) => ({
+        ...l,
+        agentName: empById.get(l.assignedAgentId)?.name ?? "—",
+        client: clientForCampaign(l.campaign),
+      })),
   );
 }
 
@@ -441,12 +477,15 @@ export interface PerformanceRow extends PerformanceRecord {
   employeeName: string;
   team: string;
   campaigns?: string;
+  /** Client account behind this row's primary campaign. */
+  client: string;
   conversion: number;
+  fromUpload?: boolean;
 }
 
 function scopeEmployees(role?: Role, team?: string) {
   const db = getDb();
-  if (role === "team_leader" && team) return db.employees.filter((e) => e.team === team);
+  if (role === "BDE" && team) return db.employees.filter((e) => e.team === team);
   return db.employees;
 }
 
@@ -486,6 +525,7 @@ export async function listPerformance(params: {
         conversion: 0,
         campaign: "",
         campaigns: "",
+        client: "",
         _campaigns: new Set<string>(),
         dialAttempts: 0,
         noAnswer: 0,
@@ -517,6 +557,75 @@ export async function listPerformance(params: {
     cur.dnc += p.dnc;
     cur.talkTimeSec += p.talkTimeSec;
   }
+
+  // Merge dial-upload per-agent stats so Performance + Leaderboard reflect real CSVs.
+  const empByName = new Map(db.employees.map((e) => [normalizeAgentName(e.name), e]));
+  const uploadStats = uploadAgentStats({
+    from: params.from,
+    to: params.to,
+    campaign: params.campaign && params.campaign !== "all" ? params.campaign : undefined,
+  });
+  for (const [, stat] of uploadStats) {
+    if (stat.summary.dialAttempts <= 0 && stat.summary.connects <= 0) continue;
+    const emp = empByName.get(stat.key);
+    if (!emp) continue;
+    if (params.employeeId && emp.id !== params.employeeId) continue;
+    if (params.team && params.team !== "all" && emp.team !== params.team) continue;
+
+    let cur = agg.get(emp.id);
+    if (!cur) {
+      cur = {
+        id: emp.id,
+        employeeId: emp.id,
+        date: params.to,
+        campaign: "",
+        callsMade: 0,
+        callsConnected: 0,
+        leadsGenerated: 0,
+        sales: 0,
+        revenue: 0,
+        avgTalkTimeSec: 0,
+        loginHours: 0,
+        qualityScore: 0,
+        dialAttempts: 0,
+        noAnswer: 0,
+        busy: 0,
+        voicemail: 0,
+        dnc: 0,
+        talkTimeSec: 0,
+        hourly: [],
+        employeeName: emp.name,
+        team: emp.team,
+        conversion: 0,
+        campaigns: "",
+        client: "",
+        _campaigns: new Set<string>(),
+        fromUpload: true,
+      };
+      agg.set(emp.id, cur);
+    }
+    const s = stat.summary;
+    cur.callsMade += s.dialAttempts;
+    cur.callsConnected += s.connects;
+    cur.dialAttempts += s.dialAttempts;
+    cur.noAnswer += s.noAnswer;
+    cur.busy += s.busy;
+    cur.voicemail += s.voicemail;
+    cur.dnc += s.dnc;
+    cur.talkTimeSec += s.talkTimeSec;
+    // Rough login estimate so upload-only agents aren't all "0h / Below".
+    cur.loginHours += Number((s.talkTimeSec / 3600).toFixed(2));
+    cur.fromUpload = true;
+    for (const c of stat.campaigns) {
+      if (c && (!params.campaign || params.campaign === "all" || c === params.campaign)) {
+        cur._campaigns.add(c);
+      }
+    }
+    if (params.campaign && params.campaign !== "all") {
+      cur._campaigns.add(params.campaign);
+    }
+  }
+
   const counts = new Map<string, number>();
   for (const p of rows) counts.set(p.employeeId, (counts.get(p.employeeId) ?? 0) + 1);
   const out = [...agg.values()].map((r) => {
@@ -524,17 +633,26 @@ export async function listPerformance(params: {
     const campList = Array.from(r._campaigns);
     const campaignStr = campList.length > 0 ? campList.join(", ") : r.campaign || "—";
     const { _campaigns, ...rest } = r;
+    // Prefer talk-time / connect when dial telemetry is present (upload blend).
+    const avgTalk =
+      r.callsConnected > 0 && r.talkTimeSec > 0
+        ? Math.round(r.talkTimeSec / r.callsConnected)
+        : Math.round(r.avgTalkTimeSec / n);
+    // Client account behind the row's primary campaign.
+    const client = clientForCampaign(campList[0] ?? r.campaign);
     return {
       ...rest,
       campaign: campaignStr,
       campaigns: campaignStr,
-      avgTalkTimeSec: Math.round(r.avgTalkTimeSec / n),
+      client,
+      avgTalkTimeSec: avgTalk,
       qualityScore: Number((r.qualityScore / n).toFixed(1)),
       loginHours: Number(r.loginHours.toFixed(1)),
       conversion: r.leadsGenerated ? Number(((r.sales / r.leadsGenerated) * 100).toFixed(1)) : 0,
     };
   });
-  return delay(out.sort((a, b) => b.sales - a.sales));
+  // Dial activity first so CSV uploads are visible (sales as tiebreaker).
+  return delay(out.sort((a, b) => b.callsMade - a.callsMade || b.sales - a.sales));
 }
 
 export async function trend(days = 14, team?: string): Promise<TrendPoint[]> {
@@ -545,8 +663,14 @@ export async function trend(days = 14, team?: string): Promise<TrendPoint[]> {
   for (const p of db.performance) {
     if (p.date < from) continue;
     if (team && team !== "all" && empById.get(p.employeeId)?.team !== team) continue;
-    const cur =
-      map.get(p.date) ?? { date: p.date, calls: 0, leads: 0, sales: 0, revenue: 0, conversion: 0 };
+    const cur = map.get(p.date) ?? {
+      date: p.date,
+      calls: 0,
+      leads: 0,
+      sales: 0,
+      revenue: 0,
+      conversion: 0,
+    };
     cur.calls += p.callsMade;
     cur.leads += p.leadsGenerated;
     cur.sales += p.sales;
@@ -563,11 +687,13 @@ export async function trend(days = 14, team?: string): Promise<TrendPoint[]> {
   );
 }
 
-export async function dashboardStats(team?: string): Promise<DashboardStats> {
+export async function dashboardStats(team?: string, employeeId?: string): Promise<DashboardStats> {
   const db = getDb();
   const empById = new Map(db.employees.map((e) => [e.id, e]));
-  const inScope = (id: string) =>
-    !team || team === "all" || empById.get(id)?.team === team;
+  const inScope = (id: string) => {
+    if (employeeId) return id === employeeId;
+    return !team || team === "all" || empById.get(id)?.team === team;
+  };
   const agents = db.employees.filter(
     (e) => e.role === "agent" && e.status === "Active" && inScope(e.id),
   );
@@ -588,7 +714,7 @@ export async function dashboardStats(team?: string): Promise<DashboardStats> {
   const pct = (a: number, b: number) => (b ? Number((((a - b) / b) * 100).toFixed(1)) : 0);
 
   return delay({
-    totalAgents: agents.length,
+    totalAgents: employeeId ? 1 : agents.length,
     loggedIn: att.filter((a) => a.checkIn && !a.checkOut).length,
     present,
     absent,
@@ -607,11 +733,227 @@ export async function dashboardStats(team?: string): Promise<DashboardStats> {
   });
 }
 
+/** Personal dashboard stats for a single agent. */
+export async function myDashboardStats(employeeId: string): Promise<DashboardStats> {
+  return dashboardStats(undefined, employeeId);
+}
+
+/** Personal daily trend (calls, leads, sales, revenue) for one agent. */
+export async function myDailyTrend(employeeId: string, days = 14): Promise<TrendPoint[]> {
+  const db = getDb();
+  const from = dayOffset(-days + 1);
+  const map = new Map<string, TrendPoint>();
+  for (const p of db.performance) {
+    if (p.employeeId !== employeeId || p.date < from) continue;
+    const cur = map.get(p.date) ?? {
+      date: p.date,
+      calls: 0,
+      leads: 0,
+      sales: 0,
+      revenue: 0,
+      conversion: 0,
+    };
+    cur.calls += p.callsMade;
+    cur.leads += p.leadsGenerated;
+    cur.sales += p.sales;
+    cur.revenue += p.revenue;
+    map.set(p.date, cur);
+  }
+  return delay(
+    [...map.values()]
+      .sort((a, b) => (a.date < b.date ? -1 : 1))
+      .map((p) => ({
+        ...p,
+        conversion: p.leads ? Number(((p.sales / p.leads) * 100).toFixed(1)) : 0,
+      })),
+  );
+}
+
+/** Hour × campaign logs for a given date, scoped to a team or a single agent. */
+export async function listHourlyCampaignLogs(params: {
+  date: string;
+  team?: string;
+  employeeId?: string;
+}): Promise<HourlyCampaignLog[]> {
+  const db = getDb();
+  const empById = new Map(db.employees.map((e) => [e.id, e]));
+  const out: HourlyCampaignLog[] = [];
+  for (const p of db.performance) {
+    if (p.date !== params.date) continue;
+    if (params.employeeId && p.employeeId !== params.employeeId) continue;
+    if (params.team && params.team !== "all" && empById.get(p.employeeId)?.team !== params.team)
+      continue;
+    const e = empById.get(p.employeeId);
+    for (const h of p.hourly) {
+      if (!h.dials) continue;
+      // Rough minute allocation: dials share of the hour's work, min 5 min if active
+      const minutes = Math.max(5, Math.round((h.dials / 40) * 60));
+      out.push({
+        id: `${p.employeeId}-${params.date}-${h.hour}-${p.campaign}`,
+        employeeId: p.employeeId,
+        employeeName: e?.name ?? "—",
+        team: e?.team ?? "—",
+        date: params.date,
+        hour: h.hour,
+        campaign: p.campaign,
+        dials: h.dials,
+        connects: h.connects,
+        minutes,
+      });
+    }
+  }
+  return delay(out.sort((a, b) => a.hour - b.hour || a.employeeName.localeCompare(b.employeeName)));
+}
+
+/* ------------------------------------------------- campaign bars per day */
+
+export interface DailyCampaignSegment {
+  campaign: string;
+  dials: number;
+  connects: number;
+  minutes: number;
+}
+
+export interface DailyCampaignBar {
+  employeeId: string;
+  employeeName: string;
+  team: string;
+  date: string;
+  /** One entry per campaign worked that day, sized by dial activity. */
+  segments: DailyCampaignSegment[];
+  totalDials: number;
+}
+
+/**
+ * Per employee × day campaign mix for the attendance campaign bar.
+ * Merges Performance (dialler) rows with localStorage dial uploads, so a day
+ * shows every campaign the person actually worked on.
+ */
+export async function listDailyCampaignBars(params: {
+  from: string;
+  to: string;
+  team?: string;
+  employeeId?: string;
+}): Promise<DailyCampaignBar[]> {
+  const db = getDb();
+  const empById = new Map(db.employees.map((e) => [e.id, e]));
+  const empByName = new Map(db.employees.map((e) => [normalizeAgentName(e.name), e]));
+
+  const inScope = (emp: { id: string; team: string } | undefined) =>
+    !!emp &&
+    (!params.employeeId || emp.id === params.employeeId) &&
+    (!params.team || params.team === "all" || emp.team === params.team);
+
+  const bars = new Map<
+    string,
+    {
+      employeeId: string;
+      employeeName: string;
+      team: string;
+      date: string;
+      segments: Map<string, DailyCampaignSegment>;
+    }
+  >();
+
+  const addSegment = (
+    emp: { id: string; name: string; team: string },
+    date: string,
+    campaign: string,
+    dials: number,
+    connects: number,
+    minutes: number,
+  ) => {
+    if (!campaign || dials <= 0) return;
+    const key = `${emp.id}|${date}`;
+    let bar = bars.get(key);
+    if (!bar) {
+      bar = {
+        employeeId: emp.id,
+        employeeName: emp.name,
+        team: emp.team,
+        date,
+        segments: new Map(),
+      };
+      bars.set(key, bar);
+    }
+    const cur = bar.segments.get(campaign) ?? { campaign, dials: 0, connects: 0, minutes: 0 };
+    cur.dials += dials;
+    cur.connects += connects;
+    cur.minutes += minutes;
+    bar.segments.set(campaign, cur);
+  };
+
+  // 1) Dialler performance rows (one row per employee × date × campaign).
+  for (const p of db.performance) {
+    if (p.date < params.from || p.date > params.to) continue;
+    const emp = empById.get(p.employeeId);
+    if (!inScope(emp)) continue;
+    // Rough minute allocation, same formula as listHourlyCampaignLogs.
+    const minutes = p.hourly.reduce(
+      (s, h) => s + (h.dials ? Math.max(5, Math.round((h.dials / 40) * 60)) : 0),
+      0,
+    );
+    addSegment(emp!, p.date, p.campaign, p.dialAttempts || p.callsMade, p.callsConnected, minutes);
+  }
+
+  // 2) Uploaded CSVs (localStorage) — additive, matching listPerformance.
+  for (const b of loadDialUploads()) {
+    const fallbackDay = b.uploadDate ?? (b.uploadedAt ? b.uploadedAt.slice(0, 10) : undefined);
+    for (const a of b.agents ?? []) {
+      const emp = empByName.get(a.key);
+      if (!inScope(emp)) continue;
+      const entries = Object.entries(a.dates);
+      if (entries.length > 0) {
+        for (const [day, ds] of entries) {
+          if (day < params.from || day > params.to) continue;
+          addSegment(
+            emp!,
+            day,
+            b.campaign,
+            ds.dialAttempts,
+            ds.connects,
+            Math.round(ds.talkTimeSec / 60),
+          );
+        }
+      } else if (fallbackDay && fallbackDay >= params.from && fallbackDay <= params.to) {
+        // CSV had no parseable dates — apply whole-file totals to the upload day.
+        addSegment(
+          emp!,
+          fallbackDay,
+          b.campaign,
+          a.summary.dialAttempts,
+          a.summary.connects,
+          Math.round(a.summary.talkTimeSec / 60),
+        );
+      }
+    }
+  }
+
+  const out: DailyCampaignBar[] = [...bars.values()].map((bar) => {
+    const segments = [...bar.segments.values()].sort((a, b) => b.dials - a.dials);
+    return {
+      employeeId: bar.employeeId,
+      employeeName: bar.employeeName,
+      team: bar.team,
+      date: bar.date,
+      segments,
+      totalDials: segments.reduce((s, seg) => s + seg.dials, 0),
+    };
+  });
+
+  return delay(
+    out.sort(
+      (a, b) => b.date.localeCompare(a.date) || a.employeeName.localeCompare(b.employeeName),
+    ),
+  );
+}
+
 export async function leaderboard(
   period: "daily" | "weekly" | "monthly" = "daily",
   metric: "sales" | "revenue" | "conversion" | "calls" | "qualityScore" = "sales",
   team?: string,
   campaign?: string,
+  employeeId?: string,
 ): Promise<LeaderboardRow[]> {
   const days = period === "daily" ? 1 : period === "weekly" ? 7 : 30;
   const rows = await listPerformance({
@@ -619,10 +961,9 @@ export async function leaderboard(
     to: today(),
     team,
     campaign,
+    employeeId,
   });
-  const target = Math.round(
-    (agentWeeklyTarget(campaign) / 7) * days,
-  );
+  const target = Math.round((agentWeeklyTarget(campaign) / 7) * days);
   const sorted = rows
     .map((r) => {
       const series = weeklySeriesSync({
@@ -646,6 +987,8 @@ export async function leaderboard(
         conversion: r.conversion,
         qualityScore: r.qualityScore,
         campaign: campaign && campaign !== "all" ? campaign : "All campaigns",
+        // Client account behind the selected campaign, else the agent's own client.
+        client: campaign && campaign !== "all" ? clientForCampaign(campaign) : r.client || r.team,
         target,
         attainment,
         status: statusFor(attainment),
@@ -724,7 +1067,10 @@ export async function campaignOverview(params: {
   from: string;
   to: string;
 }): Promise<CampaignSummary[]> {
-  return delay(campaignOverviewSync(params.from, params.to));
+  const rows = campaignOverviewSync(params.from, params.to).map((r) =>
+    mergeUploadsIntoCampaignRollup(r),
+  );
+  return delay(rows);
 }
 
 export interface CampaignAgentRow extends PerformanceRow {
@@ -740,6 +1086,7 @@ export async function campaignAgents(params: {
   from: string;
   to: string;
   team?: string;
+  employeeId?: string;
 }): Promise<CampaignAgentRow[]> {
   const rows = await listPerformance(params);
   const days = Math.max(
@@ -784,11 +1131,13 @@ export async function consistencyFlags(campaign?: string): Promise<ConsistencyFl
   return delay(consistencyFlagsSync(campaign && campaign !== "all" ? campaign : undefined));
 }
 
-export async function diallerAnalysis(
-  campaign?: string,
-  days = 14,
-): Promise<DiallerAnalysis> {
-  return delay(diallerAnalysisSync(campaign && campaign !== "all" ? campaign : undefined, days));
+export async function diallerAnalysis(campaign?: string, days = 14): Promise<DiallerAnalysis> {
+  const base = diallerAnalysisSync(campaign && campaign !== "all" ? campaign : undefined, days);
+  const merged = mergeUploadsIntoDialler(
+    base,
+    campaign && campaign !== "all" ? campaign : undefined,
+  );
+  return delay(merged);
 }
 
 /* -------------------------------------------------------------------- qa */
@@ -799,7 +1148,9 @@ export interface QaRow extends QaScorecard {
   team: string;
 }
 
-export async function listQa(params: { employeeId?: string; team?: string } = {}): Promise<QaRow[]> {
+export async function listQa(
+  params: { employeeId?: string; team?: string } = {},
+): Promise<QaRow[]> {
   const db = getDb();
   const empById = new Map(db.employees.map((e) => [e.id, e]));
   let rows = [...db.qa];
@@ -820,9 +1171,7 @@ export async function listQa(params: { employeeId?: string; team?: string } = {}
 
 export async function createQa(input: Omit<QaScorecard, "id" | "overall">): Promise<QaScorecard> {
   const db = getDb();
-  const overall = Math.round(
-    (Object.values(input.scores).reduce((s, v) => s + v, 0) / 60) * 100,
-  );
+  const overall = Math.round((Object.values(input.scores).reduce((s, v) => s + v, 0) / 60) * 100);
   const row: QaScorecard = { ...input, id: uid("qa"), overall };
   db.qa.unshift(row);
   return delay(row);
@@ -835,12 +1184,15 @@ export interface LeaveRow extends LeaveRequest {
   team: string;
 }
 
-export async function listLeave(params: { employeeId?: string; status?: string; team?: string } = {}) {
+export async function listLeave(
+  params: { employeeId?: string; status?: string; team?: string } = {},
+) {
   const db = getDb();
   const empById = new Map(db.employees.map((e) => [e.id, e]));
   let rows = [...db.leave];
   if (params.employeeId) rows = rows.filter((l) => l.employeeId === params.employeeId);
-  if (params.status && params.status !== "all") rows = rows.filter((l) => l.status === params.status);
+  if (params.status && params.status !== "all")
+    rows = rows.filter((l) => l.status === params.status);
   if (params.team && params.team !== "all")
     rows = rows.filter((l) => empById.get(l.employeeId)?.team === params.team);
   return delay(
@@ -854,13 +1206,13 @@ export async function listLeave(params: { employeeId?: string; status?: string; 
   );
 }
 
-export async function applyLeave(input: Omit<LeaveRequest, "id" | "status" | "appliedAt" | "days">) {
+export async function applyLeave(
+  input: Omit<LeaveRequest, "id" | "status" | "appliedAt" | "days">,
+) {
   const db = getDb();
   if (input.to < input.from) throw new ApiError("End date cannot be before the start date.");
   const days =
-    Math.round(
-      (new Date(input.to).getTime() - new Date(input.from).getTime()) / 86400000,
-    ) + 1;
+    Math.round((new Date(input.to).getTime() - new Date(input.from).getTime()) / 86400000) + 1;
   const emp = db.employees.find((e) => e.id === input.employeeId);
   if (emp && input.type !== "Unpaid" && days > emp.leaveBalance)
     throw new ApiError(`Insufficient balance. You have ${emp.leaveBalance} day(s) left.`);
@@ -895,10 +1247,19 @@ export async function listHolidays() {
 
 /* ------------------------------------------------------------ incentives */
 
-export async function incentives(period: "weekly" | "monthly" = "monthly", team?: string) {
+export async function incentives(
+  period: "weekly" | "monthly" = "monthly",
+  team?: string,
+  employeeId?: string,
+) {
   const db = getDb();
   const days = period === "weekly" ? 7 : 30;
-  const perf = await listPerformance({ from: dayOffset(-days + 1), to: today(), team });
+  const perf = await listPerformance({
+    from: dayOffset(-days + 1),
+    to: today(),
+    team,
+    employeeId,
+  });
   const rows: IncentiveRow[] = perf.map((p) => {
     const slab = [...db.slabs].reverse().find((s) => p.sales >= s.minSales);
     const emp = db.employees.find((e) => e.id === p.employeeId);
@@ -975,7 +1336,7 @@ export async function generateReport(
   const db = getDb();
   const perf = await listPerformance(params);
   const generatedAt = new Date().toISOString();
-  const money = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+  const money = (n: number) => `£${n.toLocaleString("en-GB")}`;
 
   if (type === "attendance") {
     const rows = db.attendance.filter((a) => a.date >= params.from && a.date <= params.to);
@@ -1007,9 +1368,11 @@ export async function generateReport(
   }
 
   if (type === "campaign") {
-    const rollup = campaignOverviewSync(params.from, params.to).filter(
-      (c) => !params.campaign || params.campaign === "all" || c.campaign === params.campaign,
-    );
+    const rollup = campaignOverviewSync(params.from, params.to)
+      .map((c) => mergeUploadsIntoCampaignRollup(c))
+      .filter(
+        (c) => !params.campaign || params.campaign === "all" || c.campaign === params.campaign,
+      );
     return delay({
       title: "Campaign Rollup Report",
       generatedAt,
@@ -1055,7 +1418,15 @@ export async function generateReport(
     const key = (c: string, id: string) => `${c}||${id}`;
     const agg = new Map<
       string,
-      { campaign: string; id: string; calls: number; connects: number; leads: number; sales: number; revenue: number }
+      {
+        campaign: string;
+        id: string;
+        calls: number;
+        connects: number;
+        leads: number;
+        sales: number;
+        revenue: number;
+      }
     >();
     for (const p of db2.performance) {
       if (p.date < params.from || p.date > params.to) continue;
@@ -1063,9 +1434,15 @@ export async function generateReport(
       if (params.team && params.team !== "all" && empById.get(p.employeeId)?.team !== params.team)
         continue;
       const k = key(p.campaign, p.employeeId);
-      const cur =
-        agg.get(k) ??
-        { campaign: p.campaign, id: p.employeeId, calls: 0, connects: 0, leads: 0, sales: 0, revenue: 0 };
+      const cur = agg.get(k) ?? {
+        campaign: p.campaign,
+        id: p.employeeId,
+        calls: 0,
+        connects: 0,
+        leads: 0,
+        sales: 0,
+        revenue: 0,
+      };
       cur.calls += p.callsMade;
       cur.connects += p.callsConnected;
       cur.leads += p.leadsGenerated;
@@ -1103,7 +1480,10 @@ export async function generateReport(
       rows,
       summary: [
         { label: "Rows", value: String(rows.length) },
-        { label: "Campaigns", value: String(new Set([...agg.values()].map((v) => v.campaign)).size) },
+        {
+          label: "Campaigns",
+          value: String(new Set([...agg.values()].map((v) => v.campaign)).size),
+        },
         { label: "Sales", value: String([...agg.values()].reduce((s2, v) => s2 + v.sales, 0)) },
         { label: "Revenue", value: money([...agg.values()].reduce((s2, v) => s2 + v.revenue, 0)) },
       ],
@@ -1119,26 +1499,40 @@ export async function generateReport(
           864e5,
       ) + 1,
     );
-    const d = diallerAnalysisSync(
+    const d = mergeUploadsIntoDialler(
+      diallerAnalysisSync(
+        params.campaign && params.campaign !== "all" ? params.campaign : undefined,
+        days,
+      ),
       params.campaign && params.campaign !== "all" ? params.campaign : undefined,
-      days,
     );
     return delay({
       title: "Dialler Outcome Report",
       generatedAt,
       columns: ["Hour", "Dials", "Connects", "Connect %", "No answer", "No answer %"],
-      rows: d.hourly.map((h) => [h.hour, h.dials, h.connects, `${h.connectRate}%`, h.noAnswer, `${h.noAnswerRate}%`]),
+      rows: d.hourly.map((h) => [
+        h.hour,
+        h.dials,
+        h.connects,
+        `${h.connectRate}%`,
+        h.noAnswer,
+        `${h.noAnswerRate}%`,
+      ]),
       summary: [
         { label: "Dial attempts", value: d.dialAttempts.toLocaleString("en-GB") },
         { label: "Connect rate", value: `${d.connectRate}%` },
         { label: "No answer", value: `${d.noAnswerRate}%` },
         { label: "Best hour", value: d.bestHour },
+        ...(d.fromUpload ? [{ label: "Uploaded batches", value: String(d.uploadBatches) }] : []),
       ],
     });
   }
 
   if (type === "team") {
-    const byTeam = new Map<string, { calls: number; leads: number; sales: number; revenue: number }>();
+    const byTeam = new Map<
+      string,
+      { calls: number; leads: number; sales: number; revenue: number }
+    >();
     for (const p of perf) {
       const b = byTeam.get(p.team) ?? { calls: 0, leads: 0, sales: 0, revenue: 0 };
       b.calls += p.callsMade;
@@ -1182,7 +1576,17 @@ export async function generateReport(
   return delay({
     title: titles[type] ?? "Report",
     generatedAt,
-    columns: ["Agent", "Team", "Calls", "Connected", "Leads", "Sales", "Revenue", "Conversion", "QA"],
+    columns: [
+      "Agent",
+      "Team",
+      "Calls",
+      "Connected",
+      "Leads",
+      "Sales",
+      "Revenue",
+      "Conversion",
+      "QA",
+    ],
     rows: perf.map((p) => [
       p.employeeName,
       p.team,
@@ -1196,7 +1600,7 @@ export async function generateReport(
     ]),
     summary: [
       { label: "Agents", value: String(perf.length) },
-      { label: "Calls", value: perf.reduce((s, p) => s + p.callsMade, 0).toLocaleString("en-IN") },
+      { label: "Calls", value: perf.reduce((s, p) => s + p.callsMade, 0).toLocaleString("en-GB") },
       { label: "Sales", value: String(perf.reduce((s, p) => s + p.sales, 0)) },
       { label: "Revenue", value: money(perf.reduce((s, p) => s + p.revenue, 0)) },
     ],
@@ -1248,10 +1652,10 @@ export async function aiDailySummary(team?: string): Promise<AiSummary> {
     rating,
     bullets: [
       `${stats.present} of ${stats.totalAgents} agents were present (${stats.attendanceRate}% attendance).`,
-      `The team made ${stats.callsToday.toLocaleString("en-IN")} outbound calls, ${dir(stats.deltas.calls)} compared to yesterday.`,
+      `The team made ${stats.callsToday.toLocaleString("en-GB")} outbound calls, ${dir(stats.deltas.calls)} compared to yesterday.`,
       `${stats.leadsGenerated} qualified leads were generated.`,
       `${stats.salesClosed} sales were closed at a conversion rate of ${stats.conversionRate}%.`,
-      `Revenue booked today: ₹${stats.revenue.toLocaleString("en-IN")} (${dir(stats.deltas.revenue)}).`,
+      `Revenue booked today: £${stats.revenue.toLocaleString("en-GB")} (${dir(stats.deltas.revenue)}).`,
     ],
     strengths: [
       `${top?.name ?? "The top performer"} led the floor with ${top?.sales ?? 0} sales and ${top?.conversion ?? 0}% conversion.`,
@@ -1329,12 +1733,19 @@ export async function aiChat(question: string): Promise<ChatMessage> {
   const q = question.toLowerCase();
   const stats = await dashboardStats();
   const board = await leaderboard("weekly", "conversion");
-  const top3 = board.slice(0, 3).map((b) => b.name).join(", ");
-  const bottom3 = [...board].reverse().slice(0, 3).map((b) => b.name).join(", ");
+  const top3 = board
+    .slice(0, 3)
+    .map((b) => b.name)
+    .join(", ");
+  const bottom3 = [...board]
+    .reverse()
+    .slice(0, 3)
+    .map((b) => b.name)
+    .join(", ");
 
   let content: string;
   if (q.includes("why") && (q.includes("down") || q.includes("poor") || q.includes("low"))) {
-    content = `Sales are tracking ${stats.deltas.sales}% versus yesterday. The main contributors are attendance at ${stats.attendanceRate}% (${stats.absent} absent), a conversion rate of ${stats.conversionRate}%, and a rise in no-answer calls during the afternoon block. Team B accounted for the largest share of the decline.`;
+    content = `Sales are tracking ${stats.deltas.sales}% versus yesterday. The main contributors are attendance at ${stats.attendanceRate}% (${stats.absent} absent), a conversion rate of ${stats.conversionRate}%, and a rise in no-answer calls during the afternoon block. My Utility / EDF Energy accounted for the largest share of the decline.`;
   } else if (q.includes("coach") || q.includes("improve") || q.includes("training")) {
     content = `Based on the last seven days, ${bottom3} have conversion rates below the team average. Recommended focus: call openings, objection handling and follow-up completion. Two of them also show repeated login delays.`;
   } else if (q.includes("incentive") || q.includes("bonus") || q.includes("reward")) {
@@ -1342,11 +1753,11 @@ export async function aiChat(question: string): Promise<ChatMessage> {
   } else if (q.includes("attendance")) {
     content = `Attendance today is ${stats.attendanceRate}% — ${stats.present} present, ${stats.absent} absent, ${stats.loggedIn} currently logged in. Morning shift is fully staffed; the afternoon shift is running two agents short.`;
   } else if (q.includes("revenue") || q.includes("target")) {
-    content = `Revenue booked today is ₹${stats.revenue.toLocaleString("en-IN")} (${stats.deltas.revenue}% vs yesterday). At the current pace the floor is projected to reach roughly ${Math.round(80 + stats.conversionRate * 1.4)}% of the monthly target.`;
+    content = `Revenue booked today is £${stats.revenue.toLocaleString("en-GB")} (${stats.deltas.revenue}% vs yesterday). At the current pace the floor is projected to reach roughly ${Math.round(80 + stats.conversionRate * 1.4)}% of the monthly target.`;
   } else if (q.includes("best") || q.includes("top")) {
     content = `Top performers this week by conversion: ${top3}. ${board[0]?.name} leads with ${board[0]?.conversion}% conversion across ${board[0]?.calls} calls.`;
   } else {
-    content = `Here is the current picture: ${stats.callsToday.toLocaleString("en-IN")} calls, ${stats.leadsGenerated} leads and ${stats.salesClosed} sales today at ${stats.conversionRate}% conversion, with ${stats.attendanceRate}% attendance. Ask me why performance moved, who needs coaching, or who deserves an incentive.`;
+    content = `Here is the current picture: ${stats.callsToday.toLocaleString("en-GB")} calls, ${stats.leadsGenerated} leads and ${stats.salesClosed} sales today at ${stats.conversionRate}% conversion, with ${stats.attendanceRate}% attendance. Ask me why performance moved, who needs coaching, or who deserves an incentive.`;
   }
   return delay({ id: uid("msg"), role: "assistant", content, createdAt: new Date().toISOString() });
 }
@@ -1378,6 +1789,10 @@ export const api = {
   listPerformance,
   trend,
   dashboardStats,
+  myDashboardStats,
+  myDailyTrend,
+  listHourlyCampaignLogs,
+  listDailyCampaignBars,
   leaderboard,
   listCampaigns,
   listCampaignRecords,

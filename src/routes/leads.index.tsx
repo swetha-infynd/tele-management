@@ -1,10 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarCheck, MoreHorizontal, PhoneCall, Plus, Sparkles, Tag, Target, Trash2, Users, XCircle } from "lucide-react";
+import {
+  CalendarCheck,
+  MoreHorizontal,
+  PhoneCall,
+  Plus,
+  Sparkles,
+  Tag,
+  Target,
+  Trash2,
+  Users,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
+import { ClientNamesCell } from "@/components/client-names-cell";
 import { ExportMenu } from "@/components/export-menu";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
@@ -37,7 +49,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -47,9 +65,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api, ApiError } from "@/lib/mock/api";
-import { inr } from "@/lib/format";
+import { clientNamesText } from "@/lib/dial-upload";
+import { gbp } from "@/lib/format";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/mock/types";
 import { useSession, useTeamScope } from "@/lib/session";
+import { useClientNameIndex } from "@/hooks/use-client-names";
 
 export const Route = createFileRoute("/leads/")({
   head: () => ({
@@ -83,6 +103,7 @@ function LeadsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const clientNames = useClientNameIndex();
 
   const isAgent = session.role === "agent";
   const query = {
@@ -111,8 +132,7 @@ function LeadsPage() {
     qc.invalidateQueries({ queryKey: ["leads"] });
     qc.invalidateQueries({ queryKey: ["pipeline"] });
   };
-  const onError = (e: unknown) =>
-    toast.error(e instanceof ApiError ? e.message : "Request failed");
+  const onError = (e: unknown) => toast.error(e instanceof ApiError ? e.message : "Request failed");
 
   const statusMutation = useMutation({
     mutationFn: ({ id, next }: { id: string; next: LeadStatus }) =>
@@ -151,18 +171,32 @@ function LeadsPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Sales CRM"
-        description="Every lead, follow-up and conversion in one pipeline."
+        title={isAgent ? "My Leads" : "Sales CRM"}
+        description={
+          isAgent
+            ? "Your assigned leads, follow-ups and conversions."
+            : "Every lead, follow-up and conversion in one pipeline."
+        }
         actions={
           <>
             <ExportMenu
               filename="leads"
-              columns={["Customer", "Business", "Phone", "Campaign", "Agent", "Status", "Sale"]}
+              columns={[
+                "Customer",
+                "Business",
+                "Phone",
+                "Campaign",
+                "Client",
+                "Agent",
+                "Status",
+                "Sale",
+              ]}
               rows={rows.map((l) => [
                 l.customerName,
                 l.businessName,
                 l.phone,
                 l.campaign,
+                clientNamesText(clientNames.campaign(l.campaign)),
                 l.agentName,
                 l.status,
                 l.saleAmount,
@@ -186,16 +220,39 @@ function LeadsPage() {
         {pipeline.slice(0, 5).map((p) => {
           const cfg =
             p.status === "New"
-              ? { icon: Sparkles, color: "bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300" }
+              ? {
+                  icon: Sparkles,
+                  color: "bg-sky-500/15 text-gray-700 dark:bg-sky-500/25 dark:text-gray-300",
+                }
               : p.status === "Contacted"
-                ? { icon: PhoneCall, color: "bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300" }
+                ? {
+                    icon: PhoneCall,
+                    color:
+                      "bg-indigo-500/15 text-gray-700 dark:bg-indigo-500/25 dark:text-gray-300",
+                  }
                 : p.status === "Interested"
-                  ? { icon: Target, color: "bg-purple-500/15 text-gray-700 dark:bg-purple-500/25 dark:text-gray-300" }
+                  ? {
+                      icon: Target,
+                      color:
+                        "bg-purple-500/15 text-gray-700 dark:bg-purple-500/25 dark:text-gray-300",
+                    }
                   : p.status === "Converted"
-                    ? { icon: CalendarCheck, color: "bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300" }
+                    ? {
+                        icon: CalendarCheck,
+                        color:
+                          "bg-emerald-500/15 text-gray-700 dark:bg-emerald-500/25 dark:text-gray-300",
+                      }
                     : p.status === "Not Interested"
-                      ? { icon: XCircle, color: "bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300" }
-                      : { icon: Tag, color: "bg-slate-500/15 text-gray-700 dark:bg-slate-500/25 dark:text-gray-300" };
+                      ? {
+                          icon: XCircle,
+                          color:
+                            "bg-rose-500/15 text-gray-700 dark:bg-rose-500/25 dark:text-gray-300",
+                        }
+                      : {
+                          icon: Tag,
+                          color:
+                            "bg-slate-500/15 text-gray-700 dark:bg-slate-500/25 dark:text-gray-300",
+                        };
           return (
             <StatCard
               key={p.status}
@@ -220,7 +277,13 @@ function LeadsPage() {
               }}
               className="lg:max-w-xs"
             />
-            <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
+            <Select
+              value={status}
+              onValueChange={(v) => {
+                setStatus(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="lg:w-[160px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -233,7 +296,13 @@ function LeadsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={campaign} onValueChange={(v) => { setCampaign(v); setPage(1); }}>
+            <Select
+              value={campaign}
+              onValueChange={(v) => {
+                setCampaign(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="lg:w-[160px]">
                 <SelectValue placeholder="Campaign" />
               </SelectTrigger>
@@ -246,7 +315,13 @@ function LeadsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={source} onValueChange={(v) => { setSource(v); setPage(1); }}>
+            <Select
+              value={source}
+              onValueChange={(v) => {
+                setSource(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="lg:w-[150px]">
                 <SelectValue placeholder="Source" />
               </SelectTrigger>
@@ -286,9 +361,7 @@ function LeadsPage() {
                 <TableHead className="w-10">
                   <Checkbox
                     checked={allChecked}
-                    onCheckedChange={(v) =>
-                      setSelected(v ? rows.map((r) => r.id) : [])
-                    }
+                    onCheckedChange={(v) => setSelected(v ? rows.map((r) => r.id) : [])}
                     aria-label="Select all"
                   />
                 </TableHead>
@@ -334,6 +407,9 @@ function LeadsPage() {
                     <TableCell className="hidden md:table-cell">{l.businessName}</TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline">{l.campaign}</Badge>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        <ClientNamesCell preview={1} {...clientNames.campaign(l.campaign)} />
+                      </p>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-muted-foreground">
                       {l.agentName}
@@ -345,7 +421,7 @@ function LeadsPage() {
                       {l.followUpDate ?? "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      {l.saleAmount ? inr(l.saleAmount) : "—"}
+                      {l.saleAmount ? gbp(l.saleAmount) : "—"}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -382,12 +458,14 @@ function LeadsPage() {
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => setDeleteId(l.id)}
-                          >
-                            <Trash2 className="mr-2 size-4" /> Delete
-                          </DropdownMenuItem>
+                          {!isAgent && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() => setDeleteId(l.id)}
+                            >
+                              <Trash2 className="mr-2 size-4" /> Delete
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

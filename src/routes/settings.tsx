@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { inr, longDate, roleLabel } from "@/lib/format";
+import { gbp, longDate, roleLabel } from "@/lib/format";
 import { api } from "@/lib/mock/api";
 import { usePreferences, type AppPreferences } from "@/lib/preferences";
 import { useSession } from "@/lib/session";
@@ -65,7 +65,7 @@ function SettingsPage() {
 
   const [form, setForm] = useState({
     orgName: "",
-    currency: "INR",
+    currency: "GBP",
     dailyCallTarget: 0,
     dailySalesTarget: 0,
     monthlyRevenueTarget: 0,
@@ -99,8 +99,12 @@ function SettingsPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Settings"
-        description="Organisation configuration, targets and personal preferences."
+        title={editable ? "Settings" : "My Settings"}
+        description={
+          editable
+            ? "Organisation configuration, targets and personal preferences."
+            : "Your personal preferences and profile."
+        }
         actions={
           editable && (
             <Button variant="secondary" onClick={() => save.mutate()} disabled={save.isPending}>
@@ -113,10 +117,14 @@ function SettingsPage() {
       <Tabs defaultValue="application">
         <TabsList>
           <TabsTrigger value="application">Application</TabsTrigger>
-          <TabsTrigger value="organisation">Organisation</TabsTrigger>
-          <TabsTrigger value="targets">Targets</TabsTrigger>
-          <TabsTrigger value="incentives">Incentives</TabsTrigger>
-          <TabsTrigger value="holidays">Holidays</TabsTrigger>
+          {editable && (
+            <>
+              <TabsTrigger value="organisation">Organisation</TabsTrigger>
+              <TabsTrigger value="targets">Targets</TabsTrigger>
+              <TabsTrigger value="incentives">Incentives</TabsTrigger>
+              <TabsTrigger value="holidays">Holidays</TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="notifications">Alerts</TabsTrigger>
           <TabsTrigger value="profile">Profile</TabsTrigger>
         </TabsList>
@@ -124,8 +132,6 @@ function SettingsPage() {
         <TabsContent value="application" className="mt-4">
           <ApplicationSettings />
         </TabsContent>
-
-
 
         <TabsContent value="organisation" className="mt-4">
           <Card>
@@ -201,7 +207,7 @@ function SettingsPage() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Currently {inr(form.monthlyRevenueTarget)}
+                  Currently {gbp(form.monthlyRevenueTarget)}
                 </p>
               </div>
               <div className="grid gap-2">
@@ -250,7 +256,7 @@ function SettingsPage() {
                   {(incentiveData?.slabs ?? []).map((s) => (
                     <TableRow key={s.minSales}>
                       <TableCell>{s.minSales}+ sales</TableCell>
-                      <TableCell className="text-right">{inr(s.amount)}</TableCell>
+                      <TableCell className="text-right">{gbp(s.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -354,7 +360,15 @@ function SettingsPage() {
   );
 }
 
-function SettingRow({ label, desc, children }: { label: string; desc: string; children: ReactNode }) {
+function SettingRow({
+  label,
+  desc,
+  children,
+}: {
+  label: string;
+  desc: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="space-y-0.5">
@@ -463,14 +477,20 @@ function ApplicationSettings() {
             </Select>
           </SettingRow>
           <Separator />
-          <SettingRow label="Collapse sidebar by default" desc="Start with a narrow navigation rail.">
+          <SettingRow
+            label="Collapse sidebar by default"
+            desc="Start with a narrow navigation rail."
+          >
             <Switch
               checked={prefs.sidebarCollapsed}
               onCheckedChange={(v) => setPref("sidebarCollapsed", v)}
             />
           </SettingRow>
           <Separator />
-          <SettingRow label="Sticky table headers" desc="Keep column headers visible while scrolling.">
+          <SettingRow
+            label="Sticky table headers"
+            desc="Keep column headers visible while scrolling."
+          >
             <Switch
               checked={prefs.stickyTableHeaders}
               onCheckedChange={(v) => setPref("stickyTableHeaders", v)}
@@ -495,7 +515,10 @@ function ApplicationSettings() {
             </Select>
           </SettingRow>
           <Separator />
-          <SettingRow label="Auto-refresh dashboards" desc="Poll live floor metrics on an interval.">
+          <SettingRow
+            label="Auto-refresh dashboards"
+            desc="Poll live floor metrics on an interval."
+          >
             <Select
               value={String(prefs.autoRefreshSeconds)}
               onValueChange={(v) => setPref("autoRefreshSeconds", Number(v))}
